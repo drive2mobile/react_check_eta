@@ -1,0 +1,57 @@
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
+.btn-danger {
+    background-color: #f9c5ce;
+    border-color: #f9c5ce;
+    color: #484848;
+    --bs-btn-hover-color: #484848;
+    --bs-btn-hover-bg: #f9d5db;
+    --bs-btn-hover-border-color: #f9d5db;
+	--bs-btn-active-bg: #fcafbb;
+	--bs-btn-active-border-color: #fcafbb;
+    --bs-btn-active-color: #484848;
+}
+
+.btn-success {
+    background-color: #bdffb9;
+    border-color: #fafafa;
+    color: #484848;
+    --bs-btn-hover-color: #484848;
+    --bs-btn-hover-bg: #d8ffd6;
+    --bs-btn-hover-border-color: #d8ffd6;
+	--bs-btn-active-bg: #a1f69c;
+	--bs-btn-active-border-color: #a1f69c;
+    --bs-btn-active-color: #484848;
+}
+
+.accordion-button {
+    background-color: #fafafa;
+    color: #484848;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: #d6ecfb;
+    color: #484848;
+}
+
+.btn-group-lg>.btn, .btn-lg {
+    --bs-btn-padding-x: 0rem;
+}
+
+/* .container {
+	--bs-gutter-x: 0px;
+	--bs-gutter-y: 0;
+}
+
+.col {
+	--bs-gutter-x: 0px;
+	--bs-gutter-y: 0;
+} */
+
+.mb-3 {
+	/* margin-top: 2px !important;
+    margin-bottom: 2px !important; */
+}
