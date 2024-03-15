@@ -1,120 +1,76 @@
-import AppBar from '../ui_components/AppBar';
-import styles from './QuickSearchStyle.module.css';
-import { useState, useEffect } from 'react';
-import { Form, Accordion, Button, ListGroup, Row, Col, Fade, Spinner, Toast, Container } from 'react-bootstrap';
-import * as Icon from 'react-bootstrap-icons';
+// ===== NEARBY STOPS =====
 
-const QuickSearch = () => {
-    const[showLoading, setShowLoading] = useState(true);
-    const[showContent, setShowContent] = useState(false);
-    const[inputRoutes, setInputRoutes] = useState('');
+const onClickSearch = async() => {
+    // var newEtaList = {107:{'route':'107', 'eta':'5'}, 108:{'route':'108', 'eta':'5'}};
+    // setEtaList(newEtaList);
+    // setSuggestList({});
 
-    const onChangeInputRoutes = (letter) => {
-        var currInput = inputRoutes;
-        var newInput = '';
+    var location = await getLocation();
+    var roundLat = roundDown(location[0]);
+    var roundLong = roundDown(location[1]);
 
-        if (letter == 'backspace')
+    var topLeft = (minusInterval(roundLat)) + ',' + (minusInterval(roundLong));
+    var top = (minusInterval(roundLat)) + ',' + (roundLong);
+    var topRight = (minusInterval(roundLat)) + ',' + (addInterval(roundLong));
+
+    var left = roundLat + ',' + (minusInterval(roundLong));
+    var center = roundLat + ',' + roundLong;
+    var right = roundLat + ',' + (addInterval(roundLong));
+
+    var bottomLeft = (addInterval(roundLat)) + ',' + (minusInterval(roundLong));
+    var bottom = (addInterval(roundLat)) + ',' + (roundLong);
+    var bottomRight = (addInterval(roundLat)) + ',' + (addInterval(roundLong));
+
+    console.log(topLeft);
+    console.log(top);
+    console.log(topRight);
+
+    console.log(left);
+    console.log(center);
+    console.log(right);
+
+    console.log(bottomLeft);
+    console.log(bottom);
+    console.log(bottomRight);
+
+    var locationRouteStop = {};
+    if (topLeft in locationBasedList) { locationRouteStop = {...locationRouteStop, ...locationBasedList[topLeft]}; }
+    if (top in locationBasedList) { locationRouteStop = {...locationRouteStop, ...locationBasedList[top]}; }
+    if (topRight in locationBasedList) { locationRouteStop = {...locationRouteStop, ...locationBasedList[topRight]}; }
+
+    if (left in locationBasedList) { locationRouteStop = {...locationRouteStop, ...locationBasedList[left]}; }
+    if (center in locationBasedList) { locationRouteStop = {...locationRouteStop, ...locationBasedList[center]}; }
+    if (right in locationBasedList) { locationRouteStop = {...locationRouteStop, ...locationBasedList[right]}; }
+
+    if (bottomLeft in locationBasedList) { locationRouteStop = {...locationRouteStop, ...locationBasedList[bottomLeft]}; }
+    if (bottom in locationBasedList) { locationRouteStop = {...locationRouteStop, ...locationBasedList[bottom]}; }
+    if (bottomRight in locationBasedList) { locationRouteStop = {...locationRouteStop, ...locationBasedList[bottomRight]}; }
+
+    // console.log('route stop');
+    // console.log(locationRouteStop);
+    var newLocationRouteStop = {};
+    var routeDistance = {};
+    for (const key in locationRouteStop)
+    {
+        var currRouteID = locationRouteStop[key]['route_id'];
+        var currLat = locationRouteStop[key]['lat'];
+        var currLong = locationRouteStop[key]['long'];
+        var currDistance = calculateDistance(parseFloat(location[0]), parseFloat(location[1]), parseFloat(currLat), parseFloat(currLong));
+
+        if (currRouteID in routeDistance == false)
         {
-            if (currInput.length > 0)
-                newInput = currInput.substring(0, currInput.length-1);
-        }
-        else if (letter == 'clear')
-        {
-            newInput = '';
-        }
-        else if (letter == '/')
-        {
-            if (currInput != '' && currInput.charAt(currInput.length-1) != '/')
-                newInput = currInput + '/';
-            else
-                newInput = currInput;
+            routeDistance[currRouteID] = currDistance;
+            newLocationRouteStop[currRouteID] = locationRouteStop[key];
         }
         else
         {
-            newInput = currInput + letter;
+            if (currDistance < routeDistance[currRouteID])
+            {
+                routeDistance[currRouteID] = currDistance;
+                newLocationRouteStop[currRouteID] = locationRouteStop[key];
+            }
         }
-
-        setInputRoutes(newInput);
     }
 
-    useState(() => {
-        setTimeout(() => {
-            setShowLoading(false);
-            setTimeout(() => {
-                setShowContent(true);
-            },300);
-        }, 300)
-    },[]);
-
-    return (
-        <div className={styles.body}>
-            <Fade in={showLoading} appear={true} style={{transitionDuration: '0.3s', width:'120px', height:'120px', display: showLoading ? 'flex' : 'none', direction:'column', alignContent:'center', border:'1px solid #dee2e6', borderRadius:'10px',
-                position:'fixed', top:'calc(50% - 60px)', left:'calc(50% - 60px)',}}>
-                <div><Spinner animation="border" size="lg" variant="primary" style={{margin:'auto', width:'60px', height: '60px', borderWidth: '6px'}}/></div>   
-            </Fade>
-
-            <div style={{height:'8%'}}>
-                <AppBar leftIcon={''} Header={'Test'} rightIcon={''}></AppBar>
-            </div>
-
-            <div style={{height:'92%',display:'flex',flexDirection:'column'}}>
-                <Fade in={showContent} appear={true} style={{transitionDuration: '0.3s'}}>
-                    <div style={{height:'100%',display:'flex',flexDirection:'column'}}>
-                        {/* <Form.Control type="text" value={inputRoutes} placeholder="Enter Route" readOnly={true}/> */}
-                        
-                        <div style={{height:'40%'}}>
-                            aaa
-                        </div>
-
-                        <div style={{height:'60%'}}>
-                            <div className={styles.row} >
-                                <div style={{width:'70%'}}>
-                                    <div className={styles.row}>
-                                        <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('1')}>1</Button>
-                                        <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('2')}>2</Button>
-                                        <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('3')}>3</Button>
-                                    </div>
-                                    <div className={styles.row}>
-                                        <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('4')}>4</Button>
-                                        <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('5')}>5</Button>
-                                        <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('6')}>6</Button>
-                                    </div>
-                                    <div className={styles.row}>
-                                        <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('7')}>7</Button>
-                                        <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('8')}>8</Button>
-                                        <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('9')}>9</Button>
-                                    </div>
-                                    <div className={styles.row}>
-                                        <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('clear')}><Icon.Trash/></Button>
-                                        <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('backspace')}><Icon.Backspace/></Button>
-                                        <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('0')}>0</Button>
-                                        <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('/')}>/</Button>
-                                        <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('search')}><Icon.Search/></Button>
-                                    </div>
-                                </div>
-
-                                <div style={{width:'30%', overflowY:'auto', scrollbarWidth: 'none !important'}}>
-                                    <div className={styles.row}>
-                                        <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('1')}>1</Button>
-                                        <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('2')}>2</Button>
-                                    </div>
-                                    <div className={styles.row}>
-                                        <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('4')}>4</Button>
-                                        <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('5')}>5</Button>
-                                    </div>
-                                    <div className={styles.row}>
-                                        <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('1')}>1</Button>
-                                        <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('2')}>2</Button>
-                                    </div>
-                                    
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </Fade>
-            </div>
-        </div>
-    )
+    console.log(newLocationRouteStop);        
 }
-
-export default QuickSearch;

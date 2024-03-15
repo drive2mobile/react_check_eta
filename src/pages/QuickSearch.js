@@ -3,19 +3,46 @@ import styles from './QuickSearchStyle.module.css';
 import { useState, useEffect } from 'react';
 import { Form, Button, Fade, Spinner } from 'react-bootstrap';
 import * as Icon from 'react-bootstrap-icons';
+import { getLocation, addInterval, minusInterval, roundDown, calculateDistance, findClosestStop } from '../utilities/LocationUtility';
 
 const QuickSearch = () => {
     const[showLoading, setShowLoading] = useState(true);
     const[showContent, setShowContent] = useState(false);
     const[inputRoutes, setInputRoutes] = useState('');
+    const[locationBasedList, setLocationBasedList] = useState({});
+    const[routeStopList, setRouteStopList] = useState({});
     const[routeList, setRotueList] = useState({});
     const[suggestList, setSuggestList] = useState({});
-    const[etaList, setEtaList] = useState({});
+    const[etaList, setEtaList] = useState([]);
 
     const onClickSearch = async() => {
-        var newEtaList = {107:{'route':'107', 'eta':'5'}, 108:{'route':'108', 'eta':'5'}};
+        // var newEtaList = {107:{'route':'107', 'eta':'5'}, 108:{'route':'108', 'eta':'5'}};
+        // setEtaList(newEtaList);
+        // setSuggestList({});
+
+        var newEtaList = [];
+        var location = await getLocation();
+        var inputRoutesArray = inputRoutes.split('/');
+        for (var i=0 ; i<inputRoutesArray.length ; i++)
+        {
+            var currRouteIdArray = ['kmb' + inputRoutesArray[i] + '_I1','kmb' + inputRoutesArray[i] + '_O1',
+                                    'ctb' + inputRoutesArray[i] + '_I1','ctb' + inputRoutesArray[i] + '_O1',
+                                    'kmbctb' + inputRoutesArray[i] + '_I1','kmbctb' + inputRoutesArray[i] + '_O1',];
+
+            for (var j=0 ; j<currRouteIdArray.length ; j++)
+            {
+                if (currRouteIdArray[j] in routeStopList)
+                {
+                    var closestStop = findClosestStop(location[0], location[1], routeStopList[currRouteIdArray[j]]);
+                    if (closestStop != null) 
+                        newEtaList.push(closestStop);
+                }  
+            }
+        }
+
         setEtaList(newEtaList);
         setSuggestList({});
+        console.log(newEtaList);        
     }
 
     const onChangeInputRoutes = (letter) => {
@@ -106,7 +133,7 @@ const QuickSearch = () => {
         setSuggestList({});
     }
 
-    const loadRoutList = async() => {
+    const loadJson = async() => {
         try 
         {
             const response1 = await fetch('/json/kmb/FINAL_route_list.json');
@@ -117,13 +144,26 @@ const QuickSearch = () => {
 
             const data = { ...data1, ...data2 };
             setRotueList(data);
+
+            const response3 = await fetch('/json/location/FINAL_location_based.json');
+            const data3 = await response3.json();
+            setLocationBasedList(data3);
+
+            const response4 = await fetch('/json/kmb/FINAL_route_stop_list.json');
+            const data4 = await response4.json();
+
+            const response5 = await fetch('/json/ctb/FINAL_route_stop_list.json');
+            const data5 = await response5.json();
+
+            const data6 = { ...data4, ...data5 };
+            setRouteStopList(data6);
         } 
         catch (error)  { console.error('Error fetching JSON:', error); }
     }
 
     useState(() => {
         setTimeout(async () => {
-            await loadRoutList();
+            await loadJson();
             setShowLoading(false);
                 setTimeout(() => {
                     setShowContent(true);
@@ -133,12 +173,17 @@ const QuickSearch = () => {
 
     return (
         <div className={styles.body}>
+
+            {/* ===== LOADING SPINNER */}
             <Fade in={showLoading} appear={true} style={{transitionDuration: '0.3s', width:'120px', height:'120px', display: showLoading ? 'flex' : 'none', direction:'column', alignContent:'center', border:'1px solid #dee2e6', borderRadius:'10px',
                 position:'fixed', top:'calc(50% - 60px)', left:'calc(50% - 60px)',}}>
                 <div><Spinner animation="border" size="lg" variant="primary" style={{margin:'auto', width:'60px', height: '60px', borderWidth: '6px'}}/></div>   
             </Fade>
 
+            {/* ===== MAIN CONTENT ===== */}
             <div style={{height:'100vh'}}>
+
+                {/* ===== APP BAR ===== */}
                 <div style={{height:'60px'}}>
                     <AppBar leftIcon={''} Header={'Test'} rightIcon={''}></AppBar>
                 </div>
@@ -146,7 +191,7 @@ const QuickSearch = () => {
                 <Fade in={showContent} appear={true} style={{transitionDuration: '0.3s'}}>
                     <div style={{height:'calc(100vh - 60px)'}}>
 
-                        {/* ===== APP BAR ===== */}
+                        {/* ===== ROUTE INPUT ===== */}
                         <div style={{height:'60px', display:'flex', direction:'column', alignContent:'center', padding:'5px'}}>
                             <Form.Control type="text" value={inputRoutes} placeholder="Enter Route" readOnly={true}/>
                         </div>
@@ -162,9 +207,18 @@ const QuickSearch = () => {
                                 </div>
                             ))}
 
-                            {Object.keys(etaList).length > 0 && Object.keys(etaList).map((key) => (
-                                <div style={{height:'54px', width:'100%', display:'block', textAlign:'center', lineHeight:'46px'}}>
-                                    <div style={{margin:'4px', height:'46px', backgroundColor:'#EFEFEF'}} onClick={() => onClickRouteSuggestion(etaList[key]['route'])}>{etaList[key]['route']}</div>
+                            {etaList.length > 0 && etaList.map((item, index) => (
+                                <div style={{height:'64px', width:'100%', display:'block', textAlign:'center', lineHeight:'56px'}}>
+                                    <div style={{margin:'2px', height:'56px', backgroundColor:'#EFEFEF', display:'flex', flexDirection:'row'}} >
+
+                                        <div style={{width:'15%'}}>{item['route']}</div>
+                                        <div style={{width:'65%', lineHeight:'24px', textAlign:'left', margin:'4px'}}>
+                                            <div style={{height:'50%'}}>{item['dest_tc']}</div>
+                                            <div style={{height:'50%'}}>{item['name_tc']}</div>
+                                        </div>
+                                        <div style={{width:'20%'}}>1 Min</div>
+                                        
+                                    </div>
                                 </div>
                             ))}
 
