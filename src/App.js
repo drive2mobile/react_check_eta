@@ -4,10 +4,10 @@ import QuickSearch from "./pages/QuickSearch";
 
 function App() {
     return (
-        <BrowserRouter>
+        <BrowserRouter basename="/checketa">
             <Routes>
-                <Route path="/" element={<Home />}></Route>
-                <Route path='/quickSearch' element={<QuickSearch/>}></Route>
+                <Route exact path="/" element={<Home />}></Route>
+                <Route exact path='/quickSearch' element={<QuickSearch/>}></Route>
             </Routes>
         </BrowserRouter>
     );

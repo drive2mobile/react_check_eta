@@ -1,28 +1,73 @@
-const getLocation = async() => {
-    return new Promise((resolve, reject) => {
-        var latitude = '';
-        var longitude = '';
+const getLocation = async(gettingLocationRef, showToastAlert, locationRef) => {
+    gettingLocationRef.current = true;
+    showToastAlert('Getting Location');
+    var latitude = '';
+    var longitude = '';
 
-        if (navigator.geolocation) 
-        {
-            navigator.geolocation.getCurrentPosition((position) => {
-                latitude = position.coords.latitude.toString();
-                longitude = position.coords.longitude.toString();
+    // await new Promise(resolve => setTimeout(resolve, 10000));
 
-                resolve([latitude, longitude]);
-            },
-            (error) => { 
-                console.log('Error:', error.message); 
-                resolve([latitude, longitude]);
-            });
-        } 
-        else 
-        {
-            console.log('Geolocation is not supported by this browser.');
-            resolve([latitude, longitude]);
-        }
-    })
+    if (navigator.geolocation) 
+    {
+        navigator.geolocation.getCurrentPosition((position) => {
+            latitude = position.coords.latitude.toString();
+            longitude = position.coords.longitude.toString();
+            locationRef.current = [latitude, longitude];
+        },
+        (error) => { 
+            console.log('Error:', error.message); 
+            locationRef.current = [latitude, longitude];
+        });
+    } 
+    else 
+    {
+        console.log('Geolocation is not supported by this browser.');
+        locationRef.current = [latitude, longitude];
+    }
+    gettingLocationRef.current = false;
+    
+    showToastAlert('Location Get');
 }
+
+
+// const getLocation = async(setGettingLocation, showToastAlert, setLocation) => {
+//     return new Promise((resolve, reject) => {
+//         setGettingLocation(true);
+//         showToastAlert('Getting Location');
+//         var latitude = '';
+//         var longitude = '';
+
+//         // new Promise(resolve => setTimeout(resolve, 1000));
+
+//         setTimeout(() => {
+//             resolve(); 
+//           }, 10000);
+
+//         if (navigator.geolocation) 
+//         {
+//             navigator.geolocation.getCurrentPosition((position) => {
+//                 latitude = position.coords.latitude.toString();
+//                 longitude = position.coords.longitude.toString();
+
+//                 resolve([latitude, longitude]);
+//                 setLocation([latitude, longitude]);
+//             },
+//             (error) => { 
+//                 console.log('Error:', error.message); 
+//                 setLocation([latitude, longitude]);
+//                 resolve([latitude, longitude]);
+//             });
+//         } 
+//         else 
+//         {
+//             console.log('Geolocation is not supported by this browser.');
+//             setLocation([latitude, longitude]);
+//             resolve([latitude, longitude]);
+//         }
+//         setGettingLocation(false);
+        
+//         showToastAlert('Location Get');
+//     })
+// }
 
 function roundDown(lat){
     var first = lat.split('.')[0];
