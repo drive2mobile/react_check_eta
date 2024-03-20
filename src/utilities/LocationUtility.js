@@ -6,23 +6,47 @@ const getLocation = async(gettingLocationRef, showToastAlert, locationRef) => {
 
     // await new Promise(resolve => setTimeout(resolve, 10000));
 
-    if (navigator.geolocation) 
-    {
-        navigator.geolocation.getCurrentPosition((position) => {
-            latitude = position.coords.latitude.toString();
-            longitude = position.coords.longitude.toString();
-            locationRef.current = [latitude, longitude];
-        },
-        (error) => { 
-            console.log('Error:', error.message); 
-            locationRef.current = [latitude, longitude];
+    // if (navigator.geolocation) 
+    // {
+    //     navigator.geolocation.getCurrentPosition((position) => {
+    //         latitude = position.coords.latitude.toString();
+    //         longitude = position.coords.longitude.toString();
+    //         locationRef.current = [latitude, longitude];
+    //     },
+    //     (error) => { 
+    //         console.log('Error:', error.message); 
+    //         locationRef.current = [latitude, longitude];
+    //     });
+    // } 
+    // else 
+    // {
+    //     console.log('Geolocation is not supported by this browser.');
+    //     locationRef.current = [latitude, longitude];
+    // }
+
+    if (navigator.permissions) {
+        navigator.permissions.query({ name: 'geolocation' }).then(result => {
+          if (result.state === 'granted' || result.state === 'prompt') {
+            navigator.geolocation.getCurrentPosition(
+              position => {
+                const { latitude, longitude } = position.coords;
+                locationRef.current = [latitude, longitude];
+              },
+              error => {
+                console.log('Error retrieving location:', error);
+              }
+            );
+          }
+          else
+          {
+            alert('Please allow location access.');
+            window.location.href = "app-settings:location";
+            window.location.href = 'chrome://settings/content/location';
+          }
         });
-    } 
-    else 
-    {
+      } else {
         console.log('Geolocation is not supported by this browser.');
-        locationRef.current = [latitude, longitude];
-    }
+      }
     gettingLocationRef.current = false;
     
     showToastAlert('Location Get');

@@ -28,6 +28,55 @@ const extractKmbEta = (jsonData) =>
     return etaArray;
 }
 
+const extractCtbEta = (jsonData) => 
+{
+    var dataArray = jsonData['data'];
+    var etaArray = ['-', '-', '-'];
+
+    try
+    {
+        for (var i=0 ; i<dataArray.length ; i++)
+        {
+            if (dataArray[i]['eta_seq'] == 1)
+            {
+                etaArray[0] = calculateCoundDown(dataArray[i]['eta']);
+            }
+            else if (dataArray[i]['eta_seq'] == 2)
+            {
+                etaArray[1] = calculateCoundDown(dataArray[i]['eta']);
+            }
+            else if (dataArray[i]['eta_seq'] == 3)
+            {
+                etaArray[2] = calculateCoundDown(dataArray[i]['eta']);
+            }
+        }
+    }
+    catch{}
+
+    return etaArray;
+}
+
+const sortCoopEta = (etaArray) => {
+    var tempArray = [];
+    var returnArray = [];
+
+    for(var i=0 ; i<etaArray.length ; i++)
+    {
+        if (typeof etaArray[i] === 'number' && Number.isInteger(etaArray[i]))
+        {
+            tempArray.push(etaArray[i]);
+        }
+    }
+
+    returnArray = tempArray.slice().sort((a, b) => a - b);
+
+    while (returnArray.length < 3)
+        returnArray.push('-');
+
+    return returnArray;
+}
+
+
 function calculateCoundDown(timestamp){
     var difference = '-';
 
@@ -47,4 +96,4 @@ function calculateCoundDown(timestamp){
     return difference;
 }
 
-export { extractKmbEta }
+export { extractKmbEta, extractCtbEta, sortCoopEta }

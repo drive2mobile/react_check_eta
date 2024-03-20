@@ -67,4 +67,5 @@ html, body {
 
 .btn-group-lg>.btn, .btn-lg {
     --bs-btn-padding-x: 0rem;
+    --bs-btn-padding-y: 0rem;
 }

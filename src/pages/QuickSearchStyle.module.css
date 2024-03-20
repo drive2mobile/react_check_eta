@@ -32,6 +32,12 @@
     margin-right: 2px;
 }
 
+.showHideKeyboardButton{
+    width: 100%;
+    height: 100%;
+    padding: 0px;
+}
+
 .row{
     display: flex;
     justify-content: flex-start;
