@@ -6,7 +6,7 @@ html, body {
 .btn-danger {
     background-color: #f9c5ce;
     color: #484848;
-    border-radius: 0px;
+    border-radius: 4px;
     border: 1px solid #e2e2e2;
     --bs-btn-hover-color: #484848;
     --bs-btn-hover-bg: #f9c5ce;
@@ -19,7 +19,7 @@ html, body {
 .btn-light {
     background-color: #fbfbfb;
     color: #484848;
-    border-radius: 0px;
+    border-radius: 4px;
     border: 1px solid #e2e2e2;
     --bs-btn-hover-color: #484848;
     --bs-btn-hover-bg: #fbfbfb;
@@ -32,7 +32,7 @@ html, body {
 .btn-primary {
     background-color: #D2F9FD;
     color: #484848;
-    border-radius: 0px;
+    border-radius: 4px;
     border: 1px solid #e2e2e2;
     --bs-btn-hover-color: #484848;
     --bs-btn-hover-bg: #D2F9FD;
@@ -45,12 +45,25 @@ html, body {
 .btn-success {
     background-color: #bdffb9;
     color: #484848;
-    border-radius: 0px;
+    border-radius: 4px;
     border: 1px solid #e2e2e2;
     --bs-btn-hover-color: #484848;
     --bs-btn-hover-bg: #bdffb9;
     --bs-btn-hover-border-color: #e2e2e2;
 	--bs-btn-active-bg: #d8ffd6;
+	--bs-btn-active-border-color: #e2e2e2;
+    --bs-btn-active-color: #484848;
+}
+
+.btn-warning {
+    background-color: #fff8a9;
+    color: #484848;
+    border-radius: 4px;
+    border: 1px solid #e2e2e2;
+    --bs-btn-hover-color: #484848;
+    --bs-btn-hover-bg: #fff8a9;
+    --bs-btn-hover-border-color: #e2e2e2;
+	--bs-btn-active-bg: #fffac2;
 	--bs-btn-active-border-color: #e2e2e2;
     --bs-btn-active-color: #484848;
 }

@@ -4,9 +4,10 @@ import { useState, useEffect, useRef  } from 'react';
 import { Form, Button, Fade, Spinner, Toast } from 'react-bootstrap';
 import * as Icon from 'react-bootstrap-icons';
 import { getLocation, addInterval, minusInterval, roundDown, calculateDistance, findClosestStop } from '../utilities/LocationUtility';
-import { enterMultipleRoutes, minute, quickSearch, to } from '../utilities/Locale';
+import { ctb, enterMultipleRoutes, kmb, kmbctb, minute, quickSearch, to } from '../utilities/Locale';
 import axios from 'axios';
 import { extractCtbEta, extractKmbEta, sortCoopEta } from '../utilities/JsonExtract';
+import SpinnerFullscreen from '../ui_components/SpinnerFullscreen';
 
 const QuickSearch = () => {
     const[lang, setLang] = useState('tc');
@@ -19,9 +20,6 @@ const QuickSearch = () => {
     const[showToast, setShowToast] = useState(false);
     const[toastText, setToastText] = useState('');
     const[activeTimeout, setActiveTimeout] = useState('');
-
-    const locationRef = useRef([]);
-    const gettingLocationRef = useRef(false);
 
     const[inputRoutes, setInputRoutes] = useState('');
     const[suggestList, setSuggestList] = useState({});
@@ -38,13 +36,8 @@ const QuickSearch = () => {
         {
             setShowLoading(true);
 
-            if (gettingLocationRef.current == false)
-                getLocation(gettingLocationRef, showToastAlert, locationRef);
-
-            while (gettingLocationRef.current == true)
-            {
-                await new Promise(resolve => setTimeout(resolve, 500));
-            }
+            var location = [];
+            location = await getLocation(showToastAlert, lang);
 
             var newEtaList = [];
             var inputRoutesArray = inputRoutes.split('/');
@@ -58,7 +51,7 @@ const QuickSearch = () => {
                 {
                     if (currRouteIdArray[j] in routeStopList)
                     {
-                        var closestStop = findClosestStop(locationRef.current[0], locationRef.current[1], routeStopList[currRouteIdArray[j]]);
+                        var closestStop = findClosestStop(location[0], location[1], routeStopList[currRouteIdArray[j]]);
 
                         if (closestStop != null) 
                         {
@@ -81,6 +74,10 @@ const QuickSearch = () => {
 
             setDownloadTrigger((prevKey) => prevKey + 1);
         }
+        else
+        {
+            showToastAlert('Empty');
+        }
     }
 
     useEffect(() => {
@@ -97,7 +94,7 @@ const QuickSearch = () => {
 
                 if (company == 'kmb')
                 {
-                    const url = `https://data.etabus.gov.hk/v1/transport/kmb/eta/${currItem['stop']}/${currItem['route']}/${currItem['service_type']}`;
+                    const url = `https://data.etabus.gov.hk/v1/transport/kmb/eta/${currItem['stop']}/${currItem['route']}/1`;
                     const response = await axios.get(url);
                     const resultArray = extractKmbEta(response.data);
                     etaList[i]['eta1'] = resultArray[0];
@@ -121,7 +118,7 @@ const QuickSearch = () => {
                 }
                 else if (company == 'kmbctb')
                 {
-                    const urlKmb = `https://data.etabus.gov.hk/v1/transport/kmb/eta/${currItem['stop']}/${currItem['route']}/${currItem['service_type']}`;
+                    const urlKmb = `https://data.etabus.gov.hk/v1/transport/kmb/eta/${currItem['stop']}/${currItem['route']}/1`;
                     const responseKmb = await axios.get(urlKmb);
                     const resultArrayKmb = extractKmbEta(responseKmb.data);
 
@@ -282,7 +279,8 @@ const QuickSearch = () => {
     }
 
     useState(() => {
-        getLocation(gettingLocationRef, showToastAlert, locationRef);
+        getLocation(showToastAlert, lang);
+
         setTimeout(async () => {
             await loadJson();
             setShowLoading(false);
@@ -290,27 +288,18 @@ const QuickSearch = () => {
                     setShowContent(true);
                 },300);
         },  500)
+
+        
     },[]);
 
     return (
         <div className={styles.body}>
 
             {/* ===== LOADING SPINNER ===== */}
-            <div style={{ width: '100%', height: '100%', position: 'fixed', display: showLoading ? 'flex' : 'none', justifyContent: 'center', alignItems: 'center' }}>
-                <Fade in={showLoading} appear={true} style={{transitionDuration: '0.3s', width: '120px', height: '120px', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: '10px', border: '1px solid #dee2e6', backgroundColor: '#fbfbfb' }}>
-                    <div><Spinner animation="border" size="lg" variant="primary" style={{margin:'auto', width:'60px', height: '60px', borderWidth: '6px'}}/></div>   
-                </Fade>
-            </div>
-            
-            <Button variant="light" size='lg' onClick={() => setShowKeyboard(!showKeyboard)}
-                style={ showKeyboard ? {position:'fixed', bottom: '248px', width:'40px', height:'40px'} : 
-                                        {position:'fixed', bottom: '0px', width:'40px', height:'40px'}} >
-                <Icon.Keyboard style={{ height:'25px', width:'25px'}}/>
-            </Button>
+            <SpinnerFullscreen showLoading={showLoading}/>
 
             {/* ===== TOAST ===== */}
-            <Toast show={showToast} style={{display:showToast ? 'block':'none', position:'fixed', top:'10px', right:'10px'}} >
-                <Toast.Header closeButton={false}><strong className="me-auto">Alert</strong></Toast.Header>
+            <Toast show={showToast} bg={'light'} style={{display:showToast ? 'flex':'none', position:'fixed', top:'10px', left: '50%', transform: 'translateX(-50%)',}} >
                 <Toast.Body>{toastText}</Toast.Body>
             </Toast>
 
@@ -318,23 +307,25 @@ const QuickSearch = () => {
             <div style={{height:'100vh'}}>
 
                 {/* ===== APP BAR ===== */}
-                <div style={{height:'60px'}}>
-                    <AppBar leftIcon={''} Header={quickSearch[lang]} rightIcon={''}></AppBar>
-                </div>
+                <AppBar leftIcon={''} Header={quickSearch[lang]} rightIcon={''}></AppBar>
 
                 <Fade in={showContent} appear={true} style={{transitionDuration: '0.3s'}}>
-                    <div style={{height:'calc(100vh - 60px)'}}>
+                    <div style={{height:'calc(100vh - 50px)'}}>
 
                         {/* ===== ROUTE INPUT ===== */}
                         <div style={{height:'60px', display:'flex', direction:'column', alignContent:'center', padding:'5px'}}>
                             <Form.Control type="text" value={inputRoutes} placeholder={enterMultipleRoutes[lang]} readOnly={true}/>
+                            <Button variant="light" onClick={() => onChangeInputRoutes('clear')}
+                                style={{position:'fixed', right:'15px', top: '65px', textAlign:'center', height:'30px', width:'30px', borderRadius:'15px', padding:'0px'}} >
+                                <Icon.X style={{height:'25px', width:'25px'}}/>
+                            </Button>
                         </div>
 
                         {/* ===== MAIN COUTE CONTENT ===== */}
                         <div style={ showKeyboard ? 
-                            {height:'calc(100vh - 60px - 60px - 248px)', padding:'5px', overflowY:'hidden', display:'block', 
+                            {height:'calc(100dvh - 50px - 60px - 248px)', padding:'5px', overflowY:'hidden', display:'block', 
                             flexDirection:'row', justifyContent:'flex-start', flexWrap:'wrap', overflow: 'auto', scrollbarWidth: 'none',} :
-                            {height:'calc(100vh - 60px - 60px)', padding:'5px', overflowY:'hidden', display:'block', 
+                            {height:'calc(100dvh - 60px - 60px)', padding:'5px', overflowY:'hidden', display:'block', 
                             flexDirection:'row', justifyContent:'flex-start', flexWrap:'wrap', overflow: 'auto', scrollbarWidth: 'none',} 
                         }>
 
@@ -348,11 +339,22 @@ const QuickSearch = () => {
 
                             {etaList.length > 0 && etaList.map((item, index) => (
                                 <Fade in={true} appear={true} >
-                                    <div style={{height:'74px', width:'100%', display:'block', textAlign:'center', lineHeight:'66px'}}>
-                                        <div style={{margin:'2px', height:'66px', backgroundColor:'#F4F4F4', display:'flex', flexDirection:'row'}} >
+                                    <div style={{height:'74px', width:'100%', display:'block', textAlign:'center'}}>
 
-                                            <div style={{width:'15%', fontSize:'18px'}}>{item['route']}</div>
-                                            <div style={{width:'65%', lineHeight:'30px', textAlign:'left', margin:'4px'}}>
+                                        <div style={{margin:'2px', marginTop:'0px', height:'66px', backgroundColor:'white', display:'flex', borderRadius:'4px', border: '1px solid #e2e2e2', overflow:'hidden', flexDirection:'row'}} >
+
+                                            <div style={{width:'20%', fontSize:'18px'}}>
+                                                <div style={{lineHeight:'30px', marginTop:'10px'}}>{item['route']}</div>
+                                                <div style={{lineHeight:'15px', fontSize:'11px'}}>
+                                                    {item['company'] == 'ctb' ? <div style={{backgroundImage: 'linear-gradient(to right, #fff25c, #fffac2)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{ctb[lang]}</div> : ''}
+                                                    {item['company'] == 'kmb' ? <div style={{backgroundImage: 'linear-gradient(to right, #fdaaaa, #fde0e0)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{kmb[lang]}</div> : ''}
+                                                    {item['company'] == 'kmbctb' ? <div style={{backgroundImage: 'linear-gradient(to right, #f4c1c1 50%, #fff68f 50%)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{kmbctb[lang]}</div> : ''}
+                                                </div>
+                                            </div>
+
+                                            
+
+                                            <div style={{width:'60%', lineHeight:'30px', textAlign:'left', margin:'4px'}}>
                                                 <div style={{display:'flex', flexDirection:'row', height:'50%', alignItems: 'flex-end'}}>
                                                     <div style={{fontSize:'11px', marginTop: 'auto'}}>{to[lang]}&nbsp;</div>
                                                     <div style={{fontSize:'17px'}}>{item['dest_tc']}</div>
@@ -382,70 +384,81 @@ const QuickSearch = () => {
                         </div>
 
                         {/* ===== NUM PAD ===== */}
-                        {showKeyboard && 
-                            <div style={showKeyboard ? {height:'248px', borderTop:'1px solid #e2e2e2'} : {display:'none'}}>
-                                <div className={styles.row} >
-                                    <div style={{width:'70%', paddingLeft:'2px', paddingRight:'1px'}}>
-                                        <div className={styles.row} style={{height:'60px', padding:'2px'}}>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('1')}>1</Button>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('2')}>2</Button>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('3')}>3</Button>
-                                        </div>
-                                        <div className={styles.row} style={{height:'60px', padding:'2px'}}>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('4')}>4</Button>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('5')}>5</Button>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('6')}>6</Button>
-                                        </div>
-                                        <div className={styles.row} style={{height:'60px', padding:'2px'}}>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('7')}>7</Button>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('8')}>8</Button>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('9')}>9</Button>
-                                        </div>
-                                        <div className={styles.row} style={{height:'60px', padding:'2px'}}>
-                                            <Button variant="danger" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('clear')}><Icon.Trash style={{padding:'0px !important',margin:'0px !important'}}/></Button>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('backspace')}><Icon.Backspace/></Button>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('0')}>0</Button>
-                                            <Button variant="primary" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('/')}>/</Button>
-                                            <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onClickSearch()}><Icon.Search/></Button>
-                                        </div>
-                                    </div>
 
-                                    <div style={{width:'30%',height:'244px', paddingLeft:'1px', paddingRight:'2px', overflowY:'auto', scrollbarWidth: 'none', paddingBottom:'4px'}}>
-                                        <div className={styles.row} style={{height:'60px', padding:'2px'}}>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('X')}>X</Button>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('A')}>A</Button>
+                        {showKeyboard == false ? 
+                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => setShowKeyboard(!showKeyboard)}
+                                style={{position:'fixed', bottom: '0px', width:'50px', height:'50px'}} >
+                                <Icon.Keyboard style={{padding:'0px !important',margin:'0px !important'}}/>
+                            </Button>
+                            : ''                    
+                        }
+                        
+                        {showKeyboard && 
+                            <Fade in={true} appear={true} >
+                                <div style={showKeyboard ? {height:'248px', borderTop:'1px solid #e2e2e2'} : {display:'none'}}>
+                                    <div className={styles.row} >
+                                        <div style={{width:'70%', paddingLeft:'2px', paddingRight:'1px'}}>
+                                            <div className={styles.row} style={{height:'60px', padding:'2px'}}>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('1')}>1</Button>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('2')}>2</Button>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('3')}>3</Button>
+                                            </div>
+                                            <div className={styles.row} style={{height:'60px', padding:'2px'}}>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('4')}>4</Button>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('5')}>5</Button>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('6')}>6</Button>
+                                            </div>
+                                            <div className={styles.row} style={{height:'60px', padding:'2px'}}>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('7')}>7</Button>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('8')}>8</Button>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('9')}>9</Button>
+                                            </div>
+                                            <div className={styles.row} style={{height:'60px', padding:'2px'}}>
+                                                <Button variant="warning" size='lg' className={styles.numPadButton} onClick={() => setShowKeyboard(!showKeyboard)}><Icon.ChevronDown style={{padding:'0px !important',margin:'0px !important'}}/></Button>
+                                                <Button variant="danger" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('backspace')}><Icon.Backspace/></Button>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('0')}>0</Button>
+                                                <Button variant="primary" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('/')}>/</Button>
+                                                <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onClickSearch()}><Icon.Search/></Button>
+                                            </div>
                                         </div>
-                                        <div className={styles.row} style={{height:'60px', padding:'2px'}}>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('B')}>B</Button>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('C')}>C</Button>
-                                        </div>
-                                        <div className={styles.row} style={{height:'60px', padding:'2px'}}>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('D')}>D</Button>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('E')}>E</Button>
-                                        </div>
-                                        <div className={styles.row} style={{height:'60px', padding:'2px'}}>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('F')}>F</Button>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('H')}>H</Button>
-                                        </div>
-                                        <div className={styles.row} style={{height:'60px', padding:'2px'}}>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('K')}>K</Button>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('M')}>M</Button>
-                                        </div>
-                                        <div className={styles.row} style={{height:'60px', padding:'2px'}}>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('N')}>N</Button>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('P')}>P</Button>
-                                        </div>
-                                        <div className={styles.row} style={{height:'60px', padding:'2px'}}>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('R')}>R</Button>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('S')}>S</Button>
-                                        </div>
-                                        <div className={styles.row} style={{height:'60px', padding:'2px'}}>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('U')}>U</Button>
-                                            <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('W')}>W</Button>
+
+                                        <div style={{width:'30%',height:'244px', paddingLeft:'1px', paddingRight:'2px', overflowY:'auto', scrollbarWidth: 'none', paddingBottom:'4px'}}>
+                                            <div className={styles.row} style={{height:'60px', padding:'2px'}}>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('X')}>X</Button>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('A')}>A</Button>
+                                            </div>
+                                            <div className={styles.row} style={{height:'60px', padding:'2px'}}>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('B')}>B</Button>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('C')}>C</Button>
+                                            </div>
+                                            <div className={styles.row} style={{height:'60px', padding:'2px'}}>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('D')}>D</Button>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('E')}>E</Button>
+                                            </div>
+                                            <div className={styles.row} style={{height:'60px', padding:'2px'}}>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('F')}>F</Button>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('H')}>H</Button>
+                                            </div>
+                                            <div className={styles.row} style={{height:'60px', padding:'2px'}}>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('K')}>K</Button>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('M')}>M</Button>
+                                            </div>
+                                            <div className={styles.row} style={{height:'60px', padding:'2px'}}>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('N')}>N</Button>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('P')}>P</Button>
+                                            </div>
+                                            <div className={styles.row} style={{height:'60px', padding:'2px'}}>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('R')}>R</Button>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('S')}>S</Button>
+                                            </div>
+                                            <div className={styles.row} style={{height:'60px', padding:'2px'}}>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('U')}>U</Button>
+                                                <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('W')}>W</Button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </Fade>
                         }
                         
                     </div>
