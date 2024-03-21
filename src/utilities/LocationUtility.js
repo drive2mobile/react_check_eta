@@ -1,6 +1,6 @@
 import { pleaseAllowBrowserToAccessLocation } from "./Locale";
 
-const getLocation = async (showToastAlert, lang_in) => {
+const getLocation = async (setToastText, setToastTrigger, lang_in) => {
 	return new Promise((resolve, reject) => {
 		if (navigator.permissions) {
 			navigator.permissions.query({ name: 'geolocation' }).then(result => {
@@ -16,59 +16,20 @@ const getLocation = async (showToastAlert, lang_in) => {
 				}
 				else 
 				{
-					showToastAlert(pleaseAllowBrowserToAccessLocation[lang_in]);
+					setToastText(pleaseAllowBrowserToAccessLocation[lang_in]);
+					setToastTrigger((prev) => prev+1);
 					resolve([]);
 				}
 			});
 		}
 		else 
 		{
-			showToastAlert(pleaseAllowBrowserToAccessLocation[lang_in]);
+			setToastText(pleaseAllowBrowserToAccessLocation[lang_in]);
+			setToastTrigger((prev) => prev+1);
 			resolve([]);
 		}
 	})
 }
-
-
-// const getLocation = async(setGettingLocation, showToastAlert, setLocation) => {
-//     return new Promise((resolve, reject) => {
-//         setGettingLocation(true);
-//         showToastAlert('Getting Location');
-//         var latitude = '';
-//         var longitude = '';
-
-//         // new Promise(resolve => setTimeout(resolve, 1000));
-
-//         setTimeout(() => {
-//             resolve(); 
-//           }, 10000);
-
-//         if (navigator.geolocation) 
-//         {
-//             navigator.geolocation.getCurrentPosition((position) => {
-//                 latitude = position.coords.latitude.toString();
-//                 longitude = position.coords.longitude.toString();
-
-//                 resolve([latitude, longitude]);
-//                 setLocation([latitude, longitude]);
-//             },
-//             (error) => { 
-//                 console.log('Error:', error.message); 
-//                 setLocation([latitude, longitude]);
-//                 resolve([latitude, longitude]);
-//             });
-//         } 
-//         else 
-//         {
-//             console.log('Geolocation is not supported by this browser.');
-//             setLocation([latitude, longitude]);
-//             resolve([latitude, longitude]);
-//         }
-//         setGettingLocation(false);
-
-//         showToastAlert('Location Get');
-//     })
-// }
 
 function roundDown(lat) {
 	var first = lat.split('.')[0];

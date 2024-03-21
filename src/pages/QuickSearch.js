@@ -8,6 +8,7 @@ import { ctb, enterMultipleRoutes, kmb, kmbctb, minute, quickSearch, to } from '
 import axios from 'axios';
 import { extractCtbEta, extractKmbEta, sortCoopEta } from '../utilities/JsonExtract';
 import SpinnerFullscreen from '../ui_components/SpinnerFullscreen';
+import ToastAlert from '../ui_components/ToastAlert';
 
 const QuickSearch = () => {
     const[lang, setLang] = useState('tc');
@@ -17,9 +18,8 @@ const QuickSearch = () => {
     const[showLoading, setShowLoading] = useState(true);
     const[showContent, setShowContent] = useState(false);
 
-    const[showToast, setShowToast] = useState(false);
     const[toastText, setToastText] = useState('');
-    const[activeTimeout, setActiveTimeout] = useState('');
+    const[toastTrigger,setToastTrigger] = useState(0);
 
     const[inputRoutes, setInputRoutes] = useState('');
     const[suggestList, setSuggestList] = useState({});
@@ -37,7 +37,7 @@ const QuickSearch = () => {
             setShowLoading(true);
 
             var location = [];
-            location = await getLocation(showToastAlert, lang);
+            location = await getLocation(setToastText, setToastTrigger, lang);
 
             var newEtaList = [];
             var inputRoutesArray = inputRoutes.split('/');
@@ -76,7 +76,8 @@ const QuickSearch = () => {
         }
         else
         {
-            showToastAlert('Empty');
+            setToastTrigger((prev) => prev+1);
+            setToastText('Empty');
         }
     }
 
@@ -265,21 +266,8 @@ const QuickSearch = () => {
         catch (error)  { console.error('Error fetching JSON:', error); }
     }
 
-    const showToastAlert = (text) => {
-        if (activeTimeout != '')
-            clearTimeout(activeTimeout);
-
-        setToastText(text);
-        setShowToast(true);
-
-        const timeoutID = setTimeout(() => {
-            setShowToast(false);
-        }, 2000)
-        setActiveTimeout(timeoutID);
-    }
-
     useState(() => {
-        getLocation(showToastAlert, lang);
+        getLocation(setToastText, setToastTrigger, lang);
 
         setTimeout(async () => {
             await loadJson();
@@ -288,8 +276,6 @@ const QuickSearch = () => {
                     setShowContent(true);
                 },300);
         },  500)
-
-        
     },[]);
 
     return (
@@ -299,9 +285,7 @@ const QuickSearch = () => {
             <SpinnerFullscreen showLoading={showLoading}/>
 
             {/* ===== TOAST ===== */}
-            <Toast show={showToast} bg={'light'} style={{display:showToast ? 'flex':'none', position:'fixed', top:'10px', left: '50%', transform: 'translateX(-50%)',}} >
-                <Toast.Body>{toastText}</Toast.Body>
-            </Toast>
+            <ToastAlert toastText={toastText} toastTrigger={toastTrigger}/>
 
             {/* ===== MAIN CONTENT ===== */}
             <div style={{height:'100vh'}}>
@@ -352,12 +336,10 @@ const QuickSearch = () => {
                                                 </div>
                                             </div>
 
-                                            
-
                                             <div style={{width:'60%', lineHeight:'30px', textAlign:'left', margin:'4px'}}>
-                                                <div style={{display:'flex', flexDirection:'row', height:'50%', alignItems: 'flex-end'}}>
-                                                    <div style={{fontSize:'11px', marginTop: 'auto'}}>{to[lang]}&nbsp;</div>
-                                                    <div style={{fontSize:'17px'}}>{item['dest_tc']}</div>
+                                                <div style={{display:'flex', flexDirection:'row', height:'50%'}}>
+                                                    <div style={{fontSize:'11px', marginTop: '3px'}}>{to[lang]}&nbsp;</div>
+                                                    <div style={{fontSize:'17px', overflow:'hidden', wordBreak:'break-all'}}>{item['dest_tc']}</div>
                                                 </div>
                                                 <div style={{height:'50%', fontSize:'17px'}}>{item['name_tc']}</div>
                                             </div>
