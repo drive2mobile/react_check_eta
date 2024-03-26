@@ -68,7 +68,7 @@ const QuickSearch = () => {
             await new Promise(resolve => setTimeout(resolve, 500));
             setShowLoading(false);
 
-            // console.log(newEtaList);
+            console.log(newEtaList);
             setEtaList(newEtaList);
             setSuggestList({});
 
@@ -97,7 +97,7 @@ const QuickSearch = () => {
                 {
                     const url = `https://data.etabus.gov.hk/v1/transport/kmb/eta/${currItem['stop']}/${currItem['route']}/1`;
                     const response = await axios.get(url);
-                    const resultArray = extractKmbEta(response.data);
+                    const resultArray = extractKmbEta(response.data, etaList[i]['direction']);
                     etaList[i]['eta1'] = resultArray[0];
                     etaList[i]['eta2'] = resultArray[1];
                     etaList[i]['eta3'] = resultArray[2];
@@ -109,7 +109,7 @@ const QuickSearch = () => {
                 {
                     const url = `https://rt.data.gov.hk/v2/transport/citybus/eta/ctb/${currItem['stop']}/${currItem['route']}`;
                     const response = await axios.get(url);
-                    const resultArray = extractCtbEta(response.data);
+                    const resultArray = extractCtbEta(response.data, etaList[i]['direction']);
                     etaList[i]['eta1'] = resultArray[0];
                     etaList[i]['eta2'] = resultArray[1];
                     etaList[i]['eta3'] = resultArray[2];
@@ -121,11 +121,11 @@ const QuickSearch = () => {
                 {
                     const urlKmb = `https://data.etabus.gov.hk/v1/transport/kmb/eta/${currItem['stop']}/${currItem['route']}/1`;
                     const responseKmb = await axios.get(urlKmb);
-                    const resultArrayKmb = extractKmbEta(responseKmb.data);
+                    const resultArrayKmb = extractKmbEta(responseKmb.data, etaList[i]['direction']);
 
                     const urlCtb = `https://rt.data.gov.hk/v2/transport/citybus/eta/ctb/${currItem['coopStop']}/${currItem['route']}`;
                     const responseCtb = await axios.get(urlCtb);
-                    const resultArrayCtb = extractCtbEta(responseCtb.data);
+                    const resultArrayCtb = extractCtbEta(responseCtb.data, etaList[i]['coopDir']);
 
                     const combinedArray = [...resultArrayKmb, ...resultArrayCtb];
                     const resultArray = sortCoopEta(combinedArray);
@@ -243,21 +243,59 @@ const QuickSearch = () => {
         setSuggestList({});
     }
 
+    // axios.defaults.withCredentials = true;
     const loadJson = async() => {
         try 
         {
-            const response1 = await fetch(`${process.env.PUBLIC_URL}/json/unique/FINAL_unique_route_list.json`);
+            // const response1 = await fetch(`${process.env.PUBLIC_URL}/json/unique/FINAL_unique_route_list.json`);
+
+            const response1 = await fetch(`https://webappdev.info:8081/uniqueroutelist`);
             const data1 = await response1.json();
             setRotueList(data1);
+
+            // const storageRouteList = sessionStorage.getItem('routeList');
+            // if (storageRouteList)
+            // {
+            //     setRotueList(JSON.parse(storageRouteList));
+            // }
+            // else
+            // {
+            //     const response1 = await fetch(`${process.env.PUBLIC_URL}/json/unique/FINAL_unique_route_list.json`);
+            //     const data1 = await response1.json();
+            //     setRotueList(data1);
+            //     sessionStorage.setItem('routeList', JSON.stringify(data1));
+            // }
 
             // const response3 = await fetch(`${process.env.PUBLIC_URL}/json/location/FINAL_location_based.json`);
             // const data3 = await response3.json();
             // setLocationBasedList(data3);
 
-            const response4 = await fetch(`${process.env.PUBLIC_URL}/json/kmb/FINAL_route_stop_list.json`);
+            // const storageRouteStopList = sessionStorage.getItem('routeStopList');
+            // if (storageRouteStopList)
+            // {
+            //     setRouteStopList(storageRouteStopList);
+            //     console.log(storageRouteStopList);
+            // }
+            // else
+            // {
+            //     const response4 = await fetch(`${process.env.PUBLIC_URL}/json/kmb/FINAL_route_stop_list.json`);
+            //     const data4 = await response4.json();
+    
+            //     const response5 = await fetch(`${process.env.PUBLIC_URL}/json/ctb/FINAL_route_stop_list.json`);
+            //     const data5 = await response5.json();
+    
+            //     const data6 = { ...data4, ...data5 };
+            //     setRouteStopList(data6);
+            //     sessionStorage.setItem('routeStopList', JSON.stringify(data6));
+            // }
+
+            // const response4 = await fetch(`${process.env.PUBLIC_URL}/json/kmb/FINAL_route_stop_list.json`);
+
+            const response4 = await fetch(`https://webappdev.info:8081/kmbroutestoplist`);
             const data4 = await response4.json();
 
-            const response5 = await fetch(`${process.env.PUBLIC_URL}/json/ctb/FINAL_route_stop_list.json`);
+            // const response5 = await fetch(`${process.env.PUBLIC_URL}/json/ctb/FINAL_route_stop_list.json`);
+            const response5 = await fetch(`https://webappdev.info:8081/ctbroutestoplist`);
             const data5 = await response5.json();
 
             const data6 = { ...data4, ...data5 };

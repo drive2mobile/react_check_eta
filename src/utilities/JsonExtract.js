@@ -1,6 +1,6 @@
 import moment from 'moment';
 
-const extractKmbEta = (jsonData) => 
+const extractKmbEta = (jsonData, direction) => 
 {
     var dataArray = jsonData['data'];
     var etaArray = ['-', '-', '-'];
@@ -9,15 +9,15 @@ const extractKmbEta = (jsonData) =>
     {
         for (var i=0 ; i<dataArray.length ; i++)
         {
-            if (dataArray[i]['eta_seq'] == '1')
+            if (dataArray[i]['eta_seq'] == '1' && dataArray[i]['dir'] == direction)
             {
                 etaArray[0] = calculateCoundDown(dataArray[i]['eta']);
             }
-            else if (dataArray[i]['eta_seq'] == '2')
+            else if (dataArray[i]['eta_seq'] == '2' && dataArray[i]['dir'] == direction)
             {
                 etaArray[1] = calculateCoundDown(dataArray[i]['eta']);
             }
-            else if (dataArray[i]['eta_seq'] == '3')
+            else if (dataArray[i]['eta_seq'] == '3' && dataArray[i]['dir'] == direction)
             {
                 etaArray[2] = calculateCoundDown(dataArray[i]['eta']);
             }
@@ -28,7 +28,7 @@ const extractKmbEta = (jsonData) =>
     return etaArray;
 }
 
-const extractCtbEta = (jsonData) => 
+const extractCtbEta = (jsonData, direction) => 
 {
     var dataArray = jsonData['data'];
     var etaArray = ['-', '-', '-'];
@@ -37,15 +37,15 @@ const extractCtbEta = (jsonData) =>
     {
         for (var i=0 ; i<dataArray.length ; i++)
         {
-            if (dataArray[i]['eta_seq'] == 1)
+            if (dataArray[i]['eta_seq'] == 1 && dataArray[i]['dir'] == direction)
             {
                 etaArray[0] = calculateCoundDown(dataArray[i]['eta']);
             }
-            else if (dataArray[i]['eta_seq'] == 2)
+            else if (dataArray[i]['eta_seq'] == 2 && dataArray[i]['dir'] == direction)
             {
                 etaArray[1] = calculateCoundDown(dataArray[i]['eta']);
             }
-            else if (dataArray[i]['eta_seq'] == 3)
+            else if (dataArray[i]['eta_seq'] == 3 && dataArray[i]['dir'] == direction)
             {
                 etaArray[2] = calculateCoundDown(dataArray[i]['eta']);
             }

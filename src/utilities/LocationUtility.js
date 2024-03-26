@@ -6,13 +6,14 @@ const getLocation = async (setToastText, setToastTrigger, lang_in) => {
 			navigator.permissions.query({ name: 'geolocation' }).then(result => {
 				if (result.state === 'granted' || result.state === 'prompt') 
 				{
+					const options = { enableHighAccuracy: false, timeout: 5000, maximumAge: 0};
+
 					navigator.geolocation.getCurrentPosition((position) => {
 						resolve([position.coords.latitude.toString(), position.coords.longitude.toString()]);
 					},error => {
 							console.log('Error retrieving location:', error);
 							resolve([]);
-						}
-					);
+					}, options);
 				}
 				else 
 				{
@@ -29,6 +30,19 @@ const getLocation = async (setToastText, setToastTrigger, lang_in) => {
 			resolve([]);
 		}
 	})
+}
+
+const getLocationStream = async(setToastText, setToastTrigger, lang_in, setLocation) => {
+	const options = { enableHighAccuracy: true, timeout: 1000, maximumAge: 0, distanceFilter: 5 };
+
+	navigator.geolocation.watchPosition((currPosition)=> {
+		const { latitude, longitude } = currPosition.coords;
+		setLocation([latitude, longitude]);
+	},
+	(error) => {
+		setToastText(pleaseAllowBrowserToAccessLocation[lang_in]);
+		setToastTrigger((prev) => prev+1);
+	},options);
 }
 
 function roundDown(lat) {
@@ -96,4 +110,4 @@ function findClosestStop(lat, lon, routeStopList) {
 	return closestStop;
 }
 
-export { getLocation, roundDown, addInterval, minusInterval, calculateDistance, findClosestStop }
+export { getLocation, roundDown, addInterval, minusInterval, calculateDistance, findClosestStop, getLocationStream }
