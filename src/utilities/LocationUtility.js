@@ -32,14 +32,19 @@ const getLocation = async (setToastText, setToastTrigger, lang_in) => {
 	})
 }
 
-const getLocationStream = async(setToastText, setToastTrigger, lang_in, setLocation) => {
-	const options = { enableHighAccuracy: true, timeout: 1000, maximumAge: 0, distanceFilter: 5 };
+const getLocationStream = async(setToastText, setToastTrigger, lang_in, locationRef) => {
+	const options = { enableHighAccuracy: false, timeout: 1000, maximumAge: 0, distanceFilter: 10 };
 
+	// await new Promise(resolve => setTimeout(resolve, 5000));
+	navigator.geolocation.getCurrentPosition(function () {}, function () {}, {});
+	
 	navigator.geolocation.watchPosition((currPosition)=> {
 		const { latitude, longitude } = currPosition.coords;
-		setLocation([latitude, longitude]);
+		locationRef.current = [latitude, longitude];
+		console.log(locationRef.current);
 	},
 	(error) => {
+		locationRef.current = [];
 		setToastText(pleaseAllowBrowserToAccessLocation[lang_in]);
 		setToastTrigger((prev) => prev+1);
 	},options);

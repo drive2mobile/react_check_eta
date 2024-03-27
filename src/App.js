@@ -4,6 +4,7 @@ import QuickSearch from "./pages/QuickSearch";
 import TimerTest from "./pages/TimerTest";
 import OSM from "./pages/OSM";
 import Location1 from "./pages/Location1";
+import RouteDetails from "./pages/RouteDetails";
 
 function App() {
     return (
@@ -14,6 +15,7 @@ function App() {
                 <Route exact path='/timertest' element={<TimerTest/>}></Route>
                 <Route exact path='/osm' element={<OSM/>}></Route>
                 <Route exact path='/location' element={<Location1/>}></Route>
+                <Route exact path='/routedetails/:routeid' element={<RouteDetails/>}></Route>
             </Routes>
         </BrowserRouter>
     );

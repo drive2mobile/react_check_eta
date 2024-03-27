@@ -3,18 +3,25 @@ import styles from './QuickSearchStyle.module.css';
 import { useState, useEffect, useRef  } from 'react';
 import { Form, Button, Fade, Spinner, Toast } from 'react-bootstrap';
 import * as Icon from 'react-bootstrap-icons';
-import { getLocation, addInterval, minusInterval, roundDown, calculateDistance, findClosestStop } from '../utilities/LocationUtility';
-import { ctb, enterMultipleRoutes, kmb, kmbctb, minute, quickSearch, to } from '../utilities/Locale';
+import { getLocation, addInterval, minusInterval, roundDown, calculateDistance, findClosestStop, getLocationStream } from '../utilities/LocationUtility';
+import { ctb, enterMultipleRoutes, kmb, kmbctb, minute, pleaseAllowBrowserToAccessLocation, quickSearch, to } from '../utilities/Locale';
 import axios from 'axios';
 import { extractCtbEta, extractKmbEta, sortCoopEta } from '../utilities/JsonExtract';
 import SpinnerFullscreen from '../ui_components/SpinnerFullscreen';
 import ToastAlert from '../ui_components/ToastAlert';
+import { wait } from '@testing-library/user-event/dist/utils';
+import ScheduleTimer, { scheduleTimer } from '../utilities/ScheduleTimer';
+import { Link, useNavigate,  } from 'react-router-dom';
 
 const QuickSearch = () => {
+    const navigate = useNavigate();
     const[lang, setLang] = useState('tc');
+    const urlParams = new URLSearchParams(window.location.search);
+    const locationRef = useRef([]);
+    const[autoDownload, setAutoDownload] = useState(false);
+    const[timer, setTimer] = useState(null);
 
     const[showKeyboard, setShowKeyboard] = useState(true);
-
     const[showLoading, setShowLoading] = useState(true);
     const[showContent, setShowContent] = useState(false);
 
@@ -24,23 +31,68 @@ const QuickSearch = () => {
     const[inputRoutes, setInputRoutes] = useState('');
     const[suggestList, setSuggestList] = useState({});
 
-    const[locationBasedList, setLocationBasedList] = useState({});
     const[routeStopList, setRouteStopList] = useState({});
     const[routeList, setRotueList] = useState({});
 
     const[etaList, setEtaList] = useState([]);
     const[downloadTrigger, setDownloadTrigger] = useState(1);
+    let watchId = null;
+    
+    useEffect(() => {
+        const options = { enableHighAccuracy: false, timeout: 1000, maximumAge: 0, distanceFilter: 10 };
+
+        if (urlParams.has('query')) { setInputRoutes(urlParams.get('query')); }
+
+        watchId = navigator.geolocation.watchPosition((currPosition) => {
+            const { latitude, longitude } = currPosition.coords;
+            locationRef.current = [latitude, longitude];
+        },(error) => {
+            locationRef.current = [];
+            setToastText(pleaseAllowBrowserToAccessLocation[lang]);
+            setToastTrigger((prev) => prev+1);
+        },options);
+
+        setTimeout(async () => {
+            await loadJson();
+            setShowLoading(false);
+            setShowContent(true); 
+            // setTimeout(() => { setShowContent(true); },200);
+        }, 200)
+
+        return () => {
+            navigator.geolocation.clearWatch(watchId);
+        };
+    },[]);
+
+    useEffect(()=>{
+        if (urlParams.has('query') && inputRoutes != ''){ onClickSearch(); }
+    },[routeStopList])
+
+    useEffect(() => {
+        downloadETA();
+    },[downloadTrigger])
+
+    useEffect(() => {
+        const cleanup = scheduleTimer(autoDownload, setDownloadTrigger, setTimer);
+        return cleanup;
+    }, [autoDownload])
 
     const onClickSearch = async() => {
         if (inputRoutes != '')
-        {
+        { 
             setShowLoading(true);
 
-            var location = [];
-            location = await getLocation(setToastText, setToastTrigger, lang);
+            urlParams.set('query', inputRoutes);
+            navigate('?' + urlParams.toString());
+
+            while(locationRef.current.length == 0)
+            {
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
 
             var newEtaList = [];
             var inputRoutesArray = inputRoutes.split('/');
+
             for (var i=0 ; i<inputRoutesArray.length ; i++)
             {
                 var currRouteIdArray = ['kmb' + inputRoutesArray[i] + '_I1','kmb' + inputRoutesArray[i] + '_O1',
@@ -51,7 +103,7 @@ const QuickSearch = () => {
                 {
                     if (currRouteIdArray[j] in routeStopList)
                     {
-                        var closestStop = findClosestStop(location[0], location[1], routeStopList[currRouteIdArray[j]]);
+                        var closestStop = findClosestStop(locationRef.current[0], locationRef.current[1], routeStopList[currRouteIdArray[j]]);
 
                         if (closestStop != null) 
                         {
@@ -65,14 +117,14 @@ const QuickSearch = () => {
                 }
             }
     
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 200));
             setShowLoading(false);
 
-            console.log(newEtaList);
             setEtaList(newEtaList);
             setSuggestList({});
 
             setDownloadTrigger((prevKey) => prevKey + 1);
+            setAutoDownload(true);
         }
         else
         {
@@ -80,10 +132,6 @@ const QuickSearch = () => {
             setToastText('Empty');
         }
     }
-
-    useEffect(() => {
-        downloadETA();
-    },[downloadTrigger])
 
     async function downloadETA() {
         if (etaList.length > 0)
@@ -149,6 +197,7 @@ const QuickSearch = () => {
     };
 
     const onChangeInputRoutes = async(letter) => {
+        setAutoDownload(false);
         setEtaList([]);
         var currInput = inputRoutes;
         var newInput = '';
@@ -243,54 +292,15 @@ const QuickSearch = () => {
         setSuggestList({});
     }
 
-    // axios.defaults.withCredentials = true;
     const loadJson = async() => {
         try 
         {
             // const response1 = await fetch(`${process.env.PUBLIC_URL}/json/unique/FINAL_unique_route_list.json`);
-
             const response1 = await fetch(`https://webappdev.info:8081/uniqueroutelist`);
             const data1 = await response1.json();
             setRotueList(data1);
 
-            // const storageRouteList = sessionStorage.getItem('routeList');
-            // if (storageRouteList)
-            // {
-            //     setRotueList(JSON.parse(storageRouteList));
-            // }
-            // else
-            // {
-            //     const response1 = await fetch(`${process.env.PUBLIC_URL}/json/unique/FINAL_unique_route_list.json`);
-            //     const data1 = await response1.json();
-            //     setRotueList(data1);
-            //     sessionStorage.setItem('routeList', JSON.stringify(data1));
-            // }
-
-            // const response3 = await fetch(`${process.env.PUBLIC_URL}/json/location/FINAL_location_based.json`);
-            // const data3 = await response3.json();
-            // setLocationBasedList(data3);
-
-            // const storageRouteStopList = sessionStorage.getItem('routeStopList');
-            // if (storageRouteStopList)
-            // {
-            //     setRouteStopList(storageRouteStopList);
-            //     console.log(storageRouteStopList);
-            // }
-            // else
-            // {
-            //     const response4 = await fetch(`${process.env.PUBLIC_URL}/json/kmb/FINAL_route_stop_list.json`);
-            //     const data4 = await response4.json();
-    
-            //     const response5 = await fetch(`${process.env.PUBLIC_URL}/json/ctb/FINAL_route_stop_list.json`);
-            //     const data5 = await response5.json();
-    
-            //     const data6 = { ...data4, ...data5 };
-            //     setRouteStopList(data6);
-            //     sessionStorage.setItem('routeStopList', JSON.stringify(data6));
-            // }
-
             // const response4 = await fetch(`${process.env.PUBLIC_URL}/json/kmb/FINAL_route_stop_list.json`);
-
             const response4 = await fetch(`https://webappdev.info:8081/kmbroutestoplist`);
             const data4 = await response4.json();
 
@@ -303,18 +313,6 @@ const QuickSearch = () => {
         } 
         catch (error)  { console.error('Error fetching JSON:', error); }
     }
-
-    useState(() => {
-        getLocation(setToastText, setToastTrigger, lang);
-
-        setTimeout(async () => {
-            await loadJson();
-            setShowLoading(false);
-                setTimeout(() => {
-                    setShowContent(true);
-                },300);
-        },  500)
-    },[]);
 
     return (
         <div className={styles.body}>
@@ -361,7 +359,7 @@ const QuickSearch = () => {
 
                             {etaList.length > 0 && etaList.map((item, index) => (
                                 <Fade in={true} appear={true} >
-                                    <div style={{height:'74px', width:'100%', display:'block', textAlign:'center'}}>
+                                    <div style={{height:'74px', width:'100%', display:'block', textAlign:'center'}} onClick={() => { navigate('/routedetails/' + item['route_id']); }}>
 
                                         <div style={{margin:'2px', marginTop:'0px', height:'66px', backgroundColor:'white', display:'flex', borderRadius:'4px', border: '1px solid #e2e2e2', overflow:'hidden', flexDirection:'row'}} >
 
@@ -438,7 +436,7 @@ const QuickSearch = () => {
                                                 <Button variant="danger" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('backspace')}><Icon.Backspace/></Button>
                                                 <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('0')}>0</Button>
                                                 <Button variant="primary" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('/')}>/</Button>
-                                                <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onClickSearch()}><Icon.Search/></Button>
+                                                <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onClickSearch('')}><Icon.Search/></Button>
                                             </div>
                                         </div>
 
