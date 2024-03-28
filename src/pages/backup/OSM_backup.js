@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
-import { getLocation } from '../utilities/LocationUtility';
+import { getLocation } from '../../utilities/LocationUtility';
 
 let DefaultIcon = L.icon({
     iconUrl: icon,
@@ -21,7 +21,7 @@ let CustomIcon = new Icon({
     iconAnchor: [18, 18]
 });
 
-const OSM = () => {
+const OSMMAP = () => {
     const [position, setPosition] = useState([22.324681505, 114.176558367]);
     const [markers, setMarkers] = useState(
         [{ lat: 22.324681505, long: 114.176558367, stop: 'ABC', show: false },
@@ -101,4 +101,4 @@ const OSM = () => {
     );
 };
 
-export default OSM;
+export default OSMMAP;

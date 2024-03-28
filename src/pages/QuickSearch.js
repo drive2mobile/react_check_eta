@@ -3,200 +3,94 @@ import styles from './QuickSearchStyle.module.css';
 import { useState, useEffect, useRef  } from 'react';
 import { Form, Button, Fade, Spinner, Toast } from 'react-bootstrap';
 import * as Icon from 'react-bootstrap-icons';
-import { getLocation, addInterval, minusInterval, roundDown, calculateDistance, findClosestStop, getLocationStream } from '../utilities/LocationUtility';
-import { ctb, enterMultipleRoutes, kmb, kmbctb, minute, pleaseAllowBrowserToAccessLocation, quickSearch, to } from '../utilities/Locale';
-import axios from 'axios';
-import { extractCtbEta, extractKmbEta, sortCoopEta } from '../utilities/JsonExtract';
+import { getLocationStream } from '../utilities/LocationUtility';
+import { ctb, enterMultipleRoutes, kmb, kmbctb, minute, quickSearch, to, unableToDownloadETA } from '../utilities/Locale';
+import { buildEtaList, extractCtbEta, extractKmbEta, sortCoopEta } from '../utilities/JsonHandler';
 import SpinnerFullscreen from '../ui_components/SpinnerFullscreen';
 import ToastAlert from '../ui_components/ToastAlert';
-import { wait } from '@testing-library/user-event/dist/utils';
-import ScheduleTimer, { scheduleTimer } from '../utilities/ScheduleTimer';
-import { Link, useNavigate,  } from 'react-router-dom';
+import { scheduleTimer } from '../utilities/ScheduleTimer';
+import { Link, useNavigate } from 'react-router-dom';
+import { downloadETA, downloadJson } from '../utilities/Downloader';
+import axios from 'axios';
 
 const QuickSearch = () => {
     const navigate = useNavigate();
-    const[lang, setLang] = useState('tc');
     const urlParams = new URLSearchParams(window.location.search);
+    const[lang, setLang] = useState('tc');
+
+    var locationWatcher = null;
     const locationRef = useRef([]);
+
     const[autoDownload, setAutoDownload] = useState(false);
     const[timer, setTimer] = useState(null);
 
     const[showKeyboard, setShowKeyboard] = useState(true);
-    const[showLoading, setShowLoading] = useState(true);
+    const[showLoading, setShowLoading] = useState(false);
     const[showContent, setShowContent] = useState(false);
 
     const[toastText, setToastText] = useState('');
     const[toastTrigger,setToastTrigger] = useState(0);
 
-    const[inputRoutes, setInputRoutes] = useState('');
-    const[suggestList, setSuggestList] = useState({});
-
     const[routeStopList, setRouteStopList] = useState({});
     const[routeList, setRotueList] = useState({});
 
+    const[inputRoutes, setInputRoutes] = useState('');
+    const[suggestList, setSuggestList] = useState({});
     const[etaList, setEtaList] = useState([]);
-    const[downloadTrigger, setDownloadTrigger] = useState(1);
-    let watchId = null;
     
     useEffect(() => {
-        const options = { enableHighAccuracy: false, timeout: 1000, maximumAge: 0, distanceFilter: 10 };
-
-        if (urlParams.has('query')) { setInputRoutes(urlParams.get('query')); }
-
-        watchId = navigator.geolocation.watchPosition((currPosition) => {
-            const { latitude, longitude } = currPosition.coords;
-            locationRef.current = [latitude, longitude];
-        },(error) => {
-            locationRef.current = [];
-            setToastText(pleaseAllowBrowserToAccessLocation[lang]);
-            setToastTrigger((prev) => prev+1);
-        },options);
-
-        setTimeout(async () => {
-            await loadJson();
-            setShowLoading(false);
-            setShowContent(true); 
-            // setTimeout(() => { setShowContent(true); },200);
-        }, 200)
+        initialize();
 
         return () => {
-            navigator.geolocation.clearWatch(watchId);
+            navigator.geolocation.clearWatch(locationWatcher);
         };
     },[]);
 
-    useEffect(()=>{
-        if (urlParams.has('query') && inputRoutes != ''){ onClickSearch(); }
-    },[routeStopList])
-
     useEffect(() => {
-        downloadETA();
-    },[downloadTrigger])
-
-    useEffect(() => {
-        const cleanup = scheduleTimer(autoDownload, setDownloadTrigger, setTimer);
+        const cleanup = scheduleTimer(autoDownload, downloadETA, etaList, setEtaList, setToastText, setToastTrigger, setTimer);
         return cleanup;
     }, [autoDownload])
 
-    const onClickSearch = async() => {
-        if (inputRoutes != '')
+    async function initialize(){
+        locationWatcher = getLocationStream(locationRef, setToastText, setToastTrigger, lang);
+
+        const data1 = await downloadJson('https://webappdev.info:8081/uniqueroutelist', setShowLoading, setToastText, setToastTrigger);
+        setRotueList(data1);
+
+        const data2 = await downloadJson(`https://webappdev.info:8081/kmbroutestoplist`, setShowLoading, setToastText, setToastTrigger);
+        const data3 = await downloadJson(`https://webappdev.info:8081/ctbroutestoplist`, setShowLoading, setToastText, setToastTrigger);
+        const data4 = { ...data2, ...data3 };
+        setRouteStopList(data4);
+
+        if (urlParams.has('query')) 
         { 
-            setShowLoading(true);
+            var newInputRoutes = urlParams.get('query');
+            setInputRoutes(newInputRoutes); 
 
-            urlParams.set('query', inputRoutes);
-            navigate('?' + urlParams.toString());
-
-            while(locationRef.current.length == 0)
-            {
-                await new Promise(resolve => setTimeout(resolve, 500));
-            }
-
-            var newEtaList = [];
-            var inputRoutesArray = inputRoutes.split('/');
-
-            for (var i=0 ; i<inputRoutesArray.length ; i++)
-            {
-                var currRouteIdArray = ['kmb' + inputRoutesArray[i] + '_I1','kmb' + inputRoutesArray[i] + '_O1',
-                                        'ctb' + inputRoutesArray[i] + '_I1','ctb' + inputRoutesArray[i] + '_O1',
-                                        'kmbctb' + inputRoutesArray[i] + '_I1','kmbctb' + inputRoutesArray[i] + '_O1',];
-    
-                for (var j=0 ; j<currRouteIdArray.length ; j++)
-                {
-                    if (currRouteIdArray[j] in routeStopList)
-                    {
-                        var closestStop = findClosestStop(locationRef.current[0], locationRef.current[1], routeStopList[currRouteIdArray[j]]);
-
-                        if (closestStop != null) 
-                        {
-                            closestStop['eta1'] = '-';
-                            closestStop['eta2'] = '-';
-                            closestStop['eta3'] = '-';
-                            newEtaList.push(closestStop);
-                        }
-                            
-                    }  
-                }
-            }
-    
-            await new Promise(resolve => setTimeout(resolve, 200));
-            setShowLoading(false);
-
+            var newEtaList = await buildEtaList(newInputRoutes, navigate, setShowLoading, urlParams, locationRef, data4, setToastText, setToastTrigger, lang);
             setEtaList(newEtaList);
             setSuggestList({});
 
-            setDownloadTrigger((prevKey) => prevKey + 1);
+            setAutoDownload(false);
+            await downloadETA(newEtaList, setEtaList, setToastText, setToastTrigger);
             setAutoDownload(true);
         }
-        else
-        {
-            setToastTrigger((prev) => prev+1);
-            setToastText('Empty');
-        }
+
+        setShowContent(true); 
     }
 
-    async function downloadETA() {
-        if (etaList.length > 0)
-        {
-            for (var i=0 ; i<etaList.length ; i++)
-            {
-                var currItem = etaList[i];
-                var company = etaList[i]['company'];
+    async function onClickSearch()
+    {
+        var newEtaList = await buildEtaList(inputRoutes, navigate, setShowLoading, urlParams, locationRef, routeStopList, setToastText, setToastTrigger, lang);
+        setEtaList(newEtaList);
+        setSuggestList({});
 
-                if (company == 'kmb')
-                {
-                    const url = `https://data.etabus.gov.hk/v1/transport/kmb/eta/${currItem['stop']}/${currItem['route']}/1`;
-                    const response = await axios.get(url);
-                    const resultArray = extractKmbEta(response.data, etaList[i]['direction']);
-                    etaList[i]['eta1'] = resultArray[0];
-                    etaList[i]['eta2'] = resultArray[1];
-                    etaList[i]['eta3'] = resultArray[2];
-
-                    // console.log(resultArray);
-                    updateElementByIndex(i, etaList[i]);
-                }
-                else if (company == 'ctb')
-                {
-                    const url = `https://rt.data.gov.hk/v2/transport/citybus/eta/ctb/${currItem['stop']}/${currItem['route']}`;
-                    const response = await axios.get(url);
-                    const resultArray = extractCtbEta(response.data, etaList[i]['direction']);
-                    etaList[i]['eta1'] = resultArray[0];
-                    etaList[i]['eta2'] = resultArray[1];
-                    etaList[i]['eta3'] = resultArray[2];
-
-                    // console.log(resultArray);
-                    updateElementByIndex(i, etaList[i]);
-                }
-                else if (company == 'kmbctb')
-                {
-                    const urlKmb = `https://data.etabus.gov.hk/v1/transport/kmb/eta/${currItem['stop']}/${currItem['route']}/1`;
-                    const responseKmb = await axios.get(urlKmb);
-                    const resultArrayKmb = extractKmbEta(responseKmb.data, etaList[i]['direction']);
-
-                    const urlCtb = `https://rt.data.gov.hk/v2/transport/citybus/eta/ctb/${currItem['coopStop']}/${currItem['route']}`;
-                    const responseCtb = await axios.get(urlCtb);
-                    const resultArrayCtb = extractCtbEta(responseCtb.data, etaList[i]['coopDir']);
-
-                    const combinedArray = [...resultArrayKmb, ...resultArrayCtb];
-                    const resultArray = sortCoopEta(combinedArray);
-
-                    etaList[i]['eta1'] = resultArray[0];
-                    etaList[i]['eta2'] = resultArray[1];
-                    etaList[i]['eta3'] = resultArray[2];
-
-                    updateElementByIndex(i, etaList[i]);
-                }
-            }
-        }
+        setAutoDownload(false);
+        await downloadETA(newEtaList, setEtaList, setToastText, setToastTrigger);
+        setAutoDownload(true);
     }
 
-    const updateElementByIndex = (index, newValue) => {
-        setEtaList(prevArray => {
-          const updatedArray = [...prevArray];
-          updatedArray[index] = newValue;
-          return updatedArray;
-        });
-    };
-
-    const onChangeInputRoutes = async(letter) => {
+    async function onChangeInputRoutes(letter){
         setAutoDownload(false);
         setEtaList([]);
         var currInput = inputRoutes;
@@ -277,7 +171,7 @@ const QuickSearch = () => {
         setInputRoutes(newInput);
     }
 
-    const onClickRouteSuggestion = (route) => {
+    async function onClickRouteSuggestion(route){
         var currInput = inputRoutes;
         var currInputArray = currInput.split('/');
         var newInput = '';
@@ -289,29 +183,6 @@ const QuickSearch = () => {
 
         newInput += route + '/';
         setInputRoutes(newInput);
-        setSuggestList({});
-    }
-
-    const loadJson = async() => {
-        try 
-        {
-            // const response1 = await fetch(`${process.env.PUBLIC_URL}/json/unique/FINAL_unique_route_list.json`);
-            const response1 = await fetch(`https://webappdev.info:8081/uniqueroutelist`);
-            const data1 = await response1.json();
-            setRotueList(data1);
-
-            // const response4 = await fetch(`${process.env.PUBLIC_URL}/json/kmb/FINAL_route_stop_list.json`);
-            const response4 = await fetch(`https://webappdev.info:8081/kmbroutestoplist`);
-            const data4 = await response4.json();
-
-            // const response5 = await fetch(`${process.env.PUBLIC_URL}/json/ctb/FINAL_route_stop_list.json`);
-            const response5 = await fetch(`https://webappdev.info:8081/ctbroutestoplist`);
-            const data5 = await response5.json();
-
-            const data6 = { ...data4, ...data5 };
-            setRouteStopList(data6);
-        } 
-        catch (error)  { console.error('Error fetching JSON:', error); }
     }
 
     return (
@@ -350,7 +221,7 @@ const QuickSearch = () => {
                         }>
 
                             {suggestList.length > 0 && suggestList.map((item, index) => (
-                                <Fade in={true} appear={true} >
+                                <Fade in={true} appear={true} key={index} >
                                     <div style={{height:'60px', width:'25%', display:'inline-block', textAlign:'center', lineHeight:'52px'}}>
                                         <div style={{margin:'4px', height:'52px', backgroundColor:'#F4F4F4'}} onClick={() => onClickRouteSuggestion(item)}>{item}</div>
                                     </div>
@@ -358,8 +229,8 @@ const QuickSearch = () => {
                             ))}
 
                             {etaList.length > 0 && etaList.map((item, index) => (
-                                <Fade in={true} appear={true} >
-                                    <div style={{height:'74px', width:'100%', display:'block', textAlign:'center'}} onClick={() => { navigate('/routedetails/' + item['route_id']); }}>
+                                <Fade in={true} appear={true} key={index}>
+                                    <div style={{height:'74px', width:'100%', display:'block', textAlign:'center'}} onClick={() => { navigate('/routedetails?routeid='+item['route_id']+'&seq='+(parseInt(item['seq'])-1)); }}>
 
                                         <div style={{margin:'2px', marginTop:'0px', height:'66px', backgroundColor:'white', display:'flex', borderRadius:'4px', border: '1px solid #e2e2e2', overflow:'hidden', flexDirection:'row'}} >
 
@@ -436,7 +307,7 @@ const QuickSearch = () => {
                                                 <Button variant="danger" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('backspace')}><Icon.Backspace/></Button>
                                                 <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('0')}>0</Button>
                                                 <Button variant="primary" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('/')}>/</Button>
-                                                <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onClickSearch('')}><Icon.Search/></Button>
+                                                <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onClickSearch()}><Icon.Search/></Button>
                                             </div>
                                         </div>
 

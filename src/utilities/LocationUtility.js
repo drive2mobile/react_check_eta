@@ -32,22 +32,20 @@ const getLocation = async (setToastText, setToastTrigger, lang_in) => {
 	})
 }
 
-const getLocationStream = async(setToastText, setToastTrigger, lang_in, locationRef) => {
+function getLocationStream(locationRef, setToastText, setToastTrigger, lang){
 	const options = { enableHighAccuracy: false, timeout: 1000, maximumAge: 0, distanceFilter: 10 };
 
-	// await new Promise(resolve => setTimeout(resolve, 5000));
-	navigator.geolocation.getCurrentPosition(function () {}, function () {}, {});
-	
-	navigator.geolocation.watchPosition((currPosition)=> {
+	const locationWatcher = navigator.geolocation.watchPosition((currPosition) => 
+	{
 		const { latitude, longitude } = currPosition.coords;
 		locationRef.current = [latitude, longitude];
-		console.log(locationRef.current);
-	},
-	(error) => {
+	},(error) => {
 		locationRef.current = [];
-		setToastText(pleaseAllowBrowserToAccessLocation[lang_in]);
+		setToastText(pleaseAllowBrowserToAccessLocation[lang]);
 		setToastTrigger((prev) => prev+1);
 	},options);
+	
+	return locationWatcher;
 }
 
 function roundDown(lat) {

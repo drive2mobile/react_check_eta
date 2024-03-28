@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 
-function scheduleTimer(autoDownload, setDownloadTrigger, setTimer) {
+function scheduleTimer(autoDownload, downloadETA, etaList, setEtaList, setToastText, setToastTrigger, setTimer) {
     let timer = null;
 
     if (autoDownload) {
         timer = setInterval(() => {
-            setDownloadTrigger(prevKey => prevKey + 1);
-        }, 30000);
+            downloadETA(etaList, setEtaList, setToastText, setToastTrigger);
+        }, 1000*30);
+        
         setTimer(timer);
     } else if (autoDownload === false) {
         if (timer) {

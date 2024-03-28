@@ -19,36 +19,19 @@ let DefaultIcon = L.icon({
 L.Marker.prototype.options.icon = DefaultIcon;
 
 let CustomIcon = new Icon({
-    iconUrl: `${process.env.PUBLIC_URL}/picture/location-icon.png`,
+    iconUrl: `${process.env.PUBLIC_URL}/picture/location.png`,
     iconSize: [36, 36],
     iconAnchor: [18, 18]
 });
 
-const OSM = ({markers, setMarkers, mapLocation, setMapLocation, lang, fullscreen, setFullscreen}) => {
+const OSM = ({markers, setMarkers, mapLocation, setMapLocation, lang, fullscreen, setFullscreen, locationRef}) => {
     const [userLocation, setUserLocation] = useState(null);
-    let watchId = null;
+    // let watchId = null;
     
     useEffect(() => {
-        const options = {
-            enableHighAccuracy: true, timeout: 10000, maximumAge: 0, distanceFilter: 5
-        };
-
-        watchId = navigator.geolocation.watchPosition(
-            (currPosition) => {
-                const { latitude, longitude } = currPosition.coords;
-                setUserLocation([latitude, longitude]);
-                console.log([latitude, longitude]);
-            },
-            (error) => {
-                console.error('Error getting user location:', error);
-            },
-            options
-        );
-
-        return () => {
-            navigator.geolocation.clearWatch(watchId);
-        };
-    }, []);
+        if (locationRef.current.length > 0)
+            setUserLocation(locationRef.current);
+    }, [locationRef.current]);
 
     function onClickMarker (index) {
         return () => {
@@ -76,27 +59,17 @@ const OSM = ({markers, setMarkers, mapLocation, setMapLocation, lang, fullscreen
 
     useEffect(() => {
         const map = mapRef.current;
-    
+
         const container = containerRef.current;
         const resizeObserver = new ResizeObserver(() => {
-          if (map) {
-            map.invalidateSize();
-          }
+            if (map) { map.invalidateSize(); }
         });
-    
         resizeObserver.observe(container);
-    
-        return () => { 
-          resizeObserver.unobserve(container);
-        };
-      }, [fullscreen]);
-
-    //   useEffect(() => {
-    //     handleChangeSize();
-    //   }, [fullscreen])
+        return () => {  resizeObserver.unobserve(container); };
+    }, [fullscreen]);
     
     return (
-        <div ref={containerRef} style={ fullscreen ? {height:'100%', width:'100%'} : {height:'50%', width:'100%'}}>
+        <div ref={containerRef} style={ fullscreen ? {height:'100%', width:'100%'} : {height:'45%', width:'100%'}}>
             <MapContainer ref={mapRef} center={mapLocation} zoom={16} style={{height:'100%', width:'100%'}}>
             
             <TileLayer
