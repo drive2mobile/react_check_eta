@@ -3,26 +3,29 @@ import styles from './QuickSearchStyle.module.css';
 import { useState, useEffect, useRef  } from 'react';
 import { Form, Button, Fade, Spinner, Toast } from 'react-bootstrap';
 import * as Icon from 'react-bootstrap-icons';
-import { getLocationStream } from '../utilities/LocationUtility';
+import { getLocation, getLocationStream } from '../utilities/LocationUtility';
 import { ctb, enterMultipleRoutes, kmb, kmbctb, minute, quickSearch, to, unableToDownloadETA } from '../utilities/Locale';
 import { buildEtaList, extractCtbEta, extractKmbEta, sortCoopEta } from '../utilities/JsonHandler';
 import SpinnerFullscreen from '../ui_components/SpinnerFullscreen';
 import ToastAlert from '../ui_components/ToastAlert';
 import { scheduleTimer } from '../utilities/ScheduleTimer';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { downloadETA, downloadJson } from '../utilities/Downloader';
 import axios from 'axios';
+import { startLocationWatcher, stopLocationWatcher } from '../utilities/LocationWatcher';
 
-const QuickSearch = () => {
+const QuickSearch = ({locationMain}) => {
     const navigate = useNavigate();
     const urlParams = new URLSearchParams(window.location.search);
     const[lang, setLang] = useState('tc');
 
-    var locationWatcher = null;
-    const locationRef = useRef([]);
+    // var locationWatcher = null;
+    // const locationRef = useRef([]);
+    // const[location, setLocation] = useState([]);
 
     const[autoDownload, setAutoDownload] = useState(false);
     const[timer, setTimer] = useState(null);
+    const[isSearch, setIsSearch] = useState(false);
 
     const[showKeyboard, setShowKeyboard] = useState(true);
     const[showLoading, setShowLoading] = useState(false);
@@ -39,12 +42,30 @@ const QuickSearch = () => {
     const[etaList, setEtaList] = useState([]);
     
     useEffect(() => {
+
         initialize();
 
-        return () => {
-            navigator.geolocation.clearWatch(locationWatcher);
-        };
     },[]);
+
+    useEffect(() => {
+        // setLocation(locationMain);
+        if (isSearch && locationMain.length != 0)
+            search();
+    },[locationMain, isSearch])
+
+    async function search()
+    {
+        var newEtaList = await buildEtaList(inputRoutes, navigate, setShowLoading, urlParams, locationMain, routeStopList, setToastText, setToastTrigger, lang);
+        setEtaList(newEtaList);
+        setSuggestList({});
+
+        setAutoDownload(false);
+        await downloadETA(newEtaList, setEtaList, setToastText, setToastTrigger);
+        setAutoDownload(true);
+
+        setIsSearch(false);
+        setShowLoading(false);
+    }
 
     useEffect(() => {
         const cleanup = scheduleTimer(autoDownload, downloadETA, etaList, setEtaList, setToastText, setToastTrigger, setTimer);
@@ -52,8 +73,6 @@ const QuickSearch = () => {
     }, [autoDownload])
 
     async function initialize(){
-        locationWatcher = getLocationStream(locationRef, setToastText, setToastTrigger, lang);
-
         const data1 = await downloadJson('https://webappdev.info:8081/uniqueroutelist', setShowLoading, setToastText, setToastTrigger);
         setRotueList(data1);
 
@@ -62,32 +81,34 @@ const QuickSearch = () => {
         const data4 = { ...data2, ...data3 };
         setRouteStopList(data4);
 
-        if (urlParams.has('query')) 
-        { 
+        // if (urlParams.has('query')) 
+        // { 
+        //     var newInputRoutes = urlParams.get('query');
+        //     setInputRoutes(newInputRoutes); 
+
+        //     var newEtaList = await buildEtaList(newInputRoutes, navigate, setShowLoading, urlParams, locationMain, data4, setToastText, setToastTrigger, lang);
+        //     setEtaList(newEtaList);
+        //     setSuggestList({});
+
+        //     setAutoDownload(false);
+        //     await downloadETA(newEtaList, setEtaList, setToastText, setToastTrigger);
+        //     setAutoDownload(true);
+        // }
+
+        if (urlParams.has('query'))
+        {
             var newInputRoutes = urlParams.get('query');
             setInputRoutes(newInputRoutes); 
-
-            var newEtaList = await buildEtaList(newInputRoutes, navigate, setShowLoading, urlParams, locationRef, data4, setToastText, setToastTrigger, lang);
-            setEtaList(newEtaList);
-            setSuggestList({});
-
-            setAutoDownload(false);
-            await downloadETA(newEtaList, setEtaList, setToastText, setToastTrigger);
-            setAutoDownload(true);
+            setIsSearch(true);
         }
-
+        
         setShowContent(true); 
     }
 
     async function onClickSearch()
     {
-        var newEtaList = await buildEtaList(inputRoutes, navigate, setShowLoading, urlParams, locationRef, routeStopList, setToastText, setToastTrigger, lang);
-        setEtaList(newEtaList);
-        setSuggestList({});
-
-        setAutoDownload(false);
-        await downloadETA(newEtaList, setEtaList, setToastText, setToastTrigger);
-        setAutoDownload(true);
+        setShowLoading(true);
+        setIsSearch(true);
     }
 
     async function onChangeInputRoutes(letter){
@@ -207,7 +228,7 @@ const QuickSearch = () => {
                         <div style={{height:'60px', display:'flex', direction:'column', alignContent:'center', padding:'5px'}}>
                             <Form.Control type="text" value={inputRoutes} placeholder={enterMultipleRoutes[lang]} readOnly={true}/>
                             <Button variant="light" onClick={() => onChangeInputRoutes('clear')}
-                                style={{position:'fixed', right:'15px', top: '65px', textAlign:'center', height:'30px', width:'30px', borderRadius:'15px', padding:'0px'}} >
+                                style={{position:'fixed', right:'15px', top: '58px', textAlign:'center', height:'44px', width:'44px', borderRadius:'22px', padding:'0px'}} >
                                 <Icon.X style={{height:'25px', width:'25px'}}/>
                             </Button>
                         </div>

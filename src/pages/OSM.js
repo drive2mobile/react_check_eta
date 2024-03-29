@@ -24,38 +24,25 @@ let CustomIcon = new Icon({
     iconAnchor: [18, 18]
 });
 
-const OSM = ({markers, setMarkers, mapLocation, setMapLocation, lang, fullscreen, setFullscreen, locationRef}) => {
-    const [userLocation, setUserLocation] = useState(null);
-    // let watchId = null;
-    
-    useEffect(() => {
-        if (locationRef.current.length > 0)
-            setUserLocation(locationRef.current);
-    }, [locationRef.current]);
-
-    function onClickMarker (index) {
-        return () => {
-            const updatedMarkers = markers.map((marker, i) => {
-                if (i === index) {
-                    setMapLocation([marker.lat, marker.long]);
-                    if (marker.show == true) { return { ...marker, show: false }; }
-                    else { return { ...marker, show: true }; }
-                }
-                else { return { ...marker, show: false }; }
-            });
-
-            setMarkers(updatedMarkers);
-        };
-    };
-
-    const SetMapView = () => {
-        const map = useMap();
-        map.setView(mapLocation, map.getZoom()); // Set the new center and keep the current zoom level
-        return null;
-    };
-
+const OSM = ({markers, setMarkers, mapLocation, setMapLocation, lang, fullscreen, setFullscreen, locationMain}) => {
     const mapRef = useRef(null);
     const containerRef = useRef(null);
+    const [userLocation, setUserLocation] = useState(null);
+    const [autoCenter, setAutoCenter] = useState(false);
+    
+    useEffect(() => {
+        if (locationMain.length > 0)
+            setUserLocation(locationMain);
+    }, [locationMain]);
+
+    useEffect(() => {
+        async function triggerAutoCenter(){
+            setAutoCenter(true);
+            await new Promise(resolve => setTimeout(resolve, 100));
+            setAutoCenter(false);
+        }
+        triggerAutoCenter();
+    },[markers]);
 
     useEffect(() => {
         const map = mapRef.current;
@@ -67,6 +54,29 @@ const OSM = ({markers, setMarkers, mapLocation, setMapLocation, lang, fullscreen
         resizeObserver.observe(container);
         return () => {  resizeObserver.unobserve(container); };
     }, [fullscreen]);
+
+    function onClickMarker (index) {
+        return () => {
+            
+            const updatedMarkers = markers.map((marker, i) => {
+                if (i === index) {
+                    setMapLocation([marker.lat, marker.long]);
+                    if (marker.show == true) { return { ...marker, show: false }; }
+                    else { return { ...marker, show: true }; }
+                }
+                else { return { ...marker, show: false }; }
+            });
+
+            setMarkers(updatedMarkers);
+            // setAutoCenter(false);
+        };
+    };
+
+    const SetMapView = () => {
+        const map = useMap();
+        map.setView(mapLocation, map.getZoom()); 
+        return null;
+    };
     
     return (
         <div ref={containerRef} style={ fullscreen ? {height:'100%', width:'100%'} : {height:'45%', width:'100%'}}>
@@ -76,7 +86,7 @@ const OSM = ({markers, setMarkers, mapLocation, setMapLocation, lang, fullscreen
                 maxZoom={19} url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 attribution="Map data &copy; <a href='https://www.openstreetmap.org/'>OpenStreetMap</a> contributors"
             />
-            <SetMapView />
+            {autoCenter ? <SetMapView /> : ''}
             {userLocation ? <Marker position={userLocation} icon={CustomIcon}></Marker> : ''}
 
             {markers ? markers.map((item, index) => (

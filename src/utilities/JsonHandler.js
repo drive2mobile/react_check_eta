@@ -12,7 +12,7 @@ async function buildEtaList(inputRoutes_in, navigate_in, setShowLoading_in, urlP
             urlParams_in.set('query', inputRoutes_in);
             navigate_in('?' + urlParams_in.toString());
 
-            while(locationRef_in.current.length == 0)
+            while(locationRef_in.length == 0)
             {
                 await new Promise(resolve => setTimeout(resolve, 500));
             }
@@ -30,7 +30,7 @@ async function buildEtaList(inputRoutes_in, navigate_in, setShowLoading_in, urlP
                 {
                     if (currRouteIdArray[j] in routeStopList_in)
                     {
-                        var closestStop = findClosestStop(locationRef_in.current[0], locationRef_in.current[1], routeStopList_in[currRouteIdArray[j]]);
+                        var closestStop = findClosestStop(locationRef_in[0], locationRef_in[1], routeStopList_in[currRouteIdArray[j]]);
 
                         if (closestStop != null) 
                         {

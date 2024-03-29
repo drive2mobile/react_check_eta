@@ -1,7 +1,8 @@
 import { pleaseAllowBrowserToAccessLocation } from "./Locale";
 
 const getLocation = async (setToastText, setToastTrigger, lang_in) => {
-	return new Promise((resolve, reject) => {
+	return new Promise(async (resolve, reject) => {
+		await new Promise(resolve => setTimeout(resolve, 5000));
 		if (navigator.permissions) {
 			navigator.permissions.query({ name: 'geolocation' }).then(result => {
 				if (result.state === 'granted' || result.state === 'prompt') 
