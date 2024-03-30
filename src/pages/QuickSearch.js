@@ -19,10 +19,6 @@ const QuickSearch = ({locationMain}) => {
     const urlParams = new URLSearchParams(window.location.search);
     const[lang, setLang] = useState('tc');
 
-    // var locationWatcher = null;
-    // const locationRef = useRef([]);
-    // const[location, setLocation] = useState([]);
-
     const[autoDownload, setAutoDownload] = useState(false);
     const[timer, setTimer] = useState(null);
     const[isSearch, setIsSearch] = useState(false);
@@ -42,13 +38,10 @@ const QuickSearch = ({locationMain}) => {
     const[etaList, setEtaList] = useState([]);
     
     useEffect(() => {
-
         initialize();
-
     },[]);
 
     useEffect(() => {
-        // setLocation(locationMain);
         if (isSearch && locationMain.length != 0)
             search();
     },[locationMain, isSearch])
@@ -80,20 +73,6 @@ const QuickSearch = ({locationMain}) => {
         const data3 = await downloadJson(`https://webappdev.info:8081/ctbroutestoplist`, setShowLoading, setToastText, setToastTrigger);
         const data4 = { ...data2, ...data3 };
         setRouteStopList(data4);
-
-        // if (urlParams.has('query')) 
-        // { 
-        //     var newInputRoutes = urlParams.get('query');
-        //     setInputRoutes(newInputRoutes); 
-
-        //     var newEtaList = await buildEtaList(newInputRoutes, navigate, setShowLoading, urlParams, locationMain, data4, setToastText, setToastTrigger, lang);
-        //     setEtaList(newEtaList);
-        //     setSuggestList({});
-
-        //     setAutoDownload(false);
-        //     await downloadETA(newEtaList, setEtaList, setToastText, setToastTrigger);
-        //     setAutoDownload(true);
-        // }
 
         if (urlParams.has('query'))
         {
