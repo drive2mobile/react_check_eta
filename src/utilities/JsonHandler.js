@@ -1,61 +1,26 @@
 import moment from 'moment';
-import { findClosestStop } from './LocationUtility';
-import { pleaseInputRoutes } from './Locale';
 
-async function buildEtaList(inputRoutes_in, navigate_in, setShowLoading_in, urlParams_in, locationRef_in, routeStopList_in, setToastText_in, setToastTrigger_in, lang_in)
-{
+async function downloadJson(url, setShowLoading, setToastText, setToastTrigger){
     return new Promise(async (resolve, reject) => {
-        if (inputRoutes_in != '')
-        { 
-            setShowLoading_in(true);
-
-            urlParams_in.set('query', inputRoutes_in);
-            navigate_in('?' + urlParams_in.toString());
-
-            while(locationRef_in.length == 0)
-            {
-                await new Promise(resolve => setTimeout(resolve, 500));
-            }
-
-            var newEtaList = [];
-            var inputRoutesArray = inputRoutes_in.split('/');
-
-            for (var i=0 ; i<inputRoutesArray.length ; i++)
-            {
-                var currRouteIdArray = ['kmb' + inputRoutesArray[i] + '_I1','kmb' + inputRoutesArray[i] + '_O1',
-                                        'ctb' + inputRoutesArray[i] + '_I1','ctb' + inputRoutesArray[i] + '_O1',
-                                        'kmbctb' + inputRoutesArray[i] + '_I1','kmbctb' + inputRoutesArray[i] + '_O1',];
-    
-                for (var j=0 ; j<currRouteIdArray.length ; j++)
-                {
-                    if (currRouteIdArray[j] in routeStopList_in)
-                    {
-                        var closestStop = findClosestStop(locationRef_in[0], locationRef_in[1], routeStopList_in[currRouteIdArray[j]]);
-
-                        if (closestStop != null) 
-                        {
-                            closestStop['eta1'] = '-';
-                            closestStop['eta2'] = '-';
-                            closestStop['eta3'] = '-';
-                            newEtaList.push(closestStop);
-                        }
-                            
-                    }  
-                }
-            }
-            setShowLoading_in(false);
-            resolve(newEtaList);
+        try{
+            setShowLoading(true);
+            // await new Promise(resolve => setTimeout(resolve, 2000));
+            const response = await fetch(url);
+            const data = await response.json();
+            setShowLoading(false);
+            resolve(data);
         }
-        else
+        catch(error)
         {
-            resolve([]);
-            setToastTrigger_in((prev) => prev+1);
-            setToastText_in(pleaseInputRoutes[lang_in]);
+            setToastText('Error');
+            setToastTrigger((prev) => prev+1);
+            setShowLoading(false);
+            resolve({});
         }
     })
 }
 
-const extractKmbEta = (jsonData, direction) => 
+function extractKmbEta(jsonData, direction)
 {
     var dataArray = jsonData['data'];
     var etaArray = ['-', '-', '-'];
@@ -83,7 +48,7 @@ const extractKmbEta = (jsonData, direction) =>
     return etaArray;
 }
 
-const extractCtbEta = (jsonData, direction) => 
+function extractCtbEta(jsonData, direction) 
 {
     var dataArray = jsonData['data'];
     var etaArray = ['-', '-', '-'];
@@ -111,7 +76,8 @@ const extractCtbEta = (jsonData, direction) =>
     return etaArray;
 }
 
-const sortCoopEta = (etaArray) => {
+function sortCoopEta(etaArray)
+{
     var tempArray = [];
     var returnArray = [];
 
@@ -131,7 +97,8 @@ const sortCoopEta = (etaArray) => {
     return returnArray;
 }
 
-function calculateCoundDown(timestamp){
+function calculateCoundDown(timestamp)
+{
     var difference = '-';
 
     try
@@ -150,4 +117,4 @@ function calculateCoundDown(timestamp){
     return difference;
 }
 
-export { extractKmbEta, extractCtbEta, sortCoopEta, buildEtaList }
+export { extractKmbEta, extractCtbEta, sortCoopEta, downloadJson }

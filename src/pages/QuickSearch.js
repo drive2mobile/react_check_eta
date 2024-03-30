@@ -1,27 +1,22 @@
+import { useState, useEffect } from 'react';
+import { Form, Button, Fade } from 'react-bootstrap';
+import { findClosestStop } from '../utilities/LocationUtility';
+import { ctb, enterMultipleRoutes, kmb, kmbctb, minute, pleaseInputRoutes, quickSearch, to, unableToDownloadETA } from '../utilities/Locale';
+import { extractCtbEta, extractKmbEta, sortCoopEta, downloadJson } from '../utilities/JsonHandler';
+import { useNavigate } from 'react-router-dom';
 import AppBar from '../ui_components/AppBar';
 import styles from './QuickSearchStyle.module.css';
-import { useState, useEffect, useRef  } from 'react';
-import { Form, Button, Fade, Spinner, Toast } from 'react-bootstrap';
-import * as Icon from 'react-bootstrap-icons';
-import { getLocation, getLocationStream } from '../utilities/LocationUtility';
-import { ctb, enterMultipleRoutes, kmb, kmbctb, minute, quickSearch, to, unableToDownloadETA } from '../utilities/Locale';
-import { buildEtaList, extractCtbEta, extractKmbEta, sortCoopEta } from '../utilities/JsonHandler';
 import SpinnerFullscreen from '../ui_components/SpinnerFullscreen';
 import ToastAlert from '../ui_components/ToastAlert';
-import { scheduleTimer } from '../utilities/ScheduleTimer';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { downloadETA, downloadJson } from '../utilities/Downloader';
 import axios from 'axios';
-import { startLocationWatcher, stopLocationWatcher } from '../utilities/LocationWatcher';
+import * as Icon from 'react-bootstrap-icons';
 
-const QuickSearch = ({locationMain}) => {
+const QuickSearch = ({locationMain, setStartGettingLocation}) => {
+    var backBtn = <Icon.ArrowLeft onClick={() => navigate('/')} style={{width:'50px', height:'50px', padding:'10px'}} />;
     const navigate = useNavigate();
     const urlParams = new URLSearchParams(window.location.search);
     const[lang, setLang] = useState('tc');
-
-    const[autoDownload, setAutoDownload] = useState(false);
     const[timer, setTimer] = useState(null);
-    const[isSearch, setIsSearch] = useState(false);
 
     const[showKeyboard, setShowKeyboard] = useState(true);
     const[showLoading, setShowLoading] = useState(false);
@@ -36,36 +31,65 @@ const QuickSearch = ({locationMain}) => {
     const[inputRoutes, setInputRoutes] = useState('');
     const[suggestList, setSuggestList] = useState({});
     const[etaList, setEtaList] = useState([]);
+
+    const[triggerSearch, setTriggerSearch] = useState(false);
+    const[triggerBuildEtaList, setTriggerBuildEtaList] = useState(false);
+    const[triggerDownload, setTriggerDownload] = useState(false);
+    const[triggerAutoDownload, setTriggerAutoDownload] = useState(false);
     
     useEffect(() => {
         initialize();
     },[]);
 
     useEffect(() => {
-        if (isSearch && locationMain.length != 0)
-            search();
-    },[locationMain, isSearch])
-
-    async function search()
-    {
-        var newEtaList = await buildEtaList(inputRoutes, navigate, setShowLoading, urlParams, locationMain, routeStopList, setToastText, setToastTrigger, lang);
-        setEtaList(newEtaList);
-        setSuggestList({});
-
-        setAutoDownload(false);
-        await downloadETA(newEtaList, setEtaList, setToastText, setToastTrigger);
-        setAutoDownload(true);
-
-        setIsSearch(false);
-        setShowLoading(false);
-    }
+        if (triggerSearch)
+            setShowLoading(true);
+        if (triggerSearch && locationMain.length != 0)
+        {
+            setTriggerBuildEtaList(true);
+            setTriggerSearch(false);
+        }
+    },[locationMain, triggerSearch])
 
     useEffect(() => {
-        const cleanup = scheduleTimer(autoDownload, downloadETA, etaList, setEtaList, setToastText, setToastTrigger, setTimer);
-        return cleanup;
-    }, [autoDownload])
+        buildEtaList(); 
+    }, [triggerBuildEtaList])
+
+    useEffect(() => {
+        downloadEta();
+    },[triggerDownload])
+
+    useEffect(() => {
+        let timerConstant = null;
+        if (triggerAutoDownload) 
+        {
+            timerConstant = setInterval(() => {
+                setTriggerDownload(true);
+            }, 1000*30);
+            
+            setTimer(timerConstant);
+        } 
+        else if (triggerAutoDownload === false) 
+        {
+            if (timer) 
+            {
+                clearInterval(timer);
+                setTimer(null);
+            }
+        }
+
+        return () => {
+            if (timer) 
+            {
+                clearInterval(timer);
+                setTimer(null);
+            }
+        };
+
+    }, [triggerAutoDownload])
 
     async function initialize(){
+        setStartGettingLocation(true);
         const data1 = await downloadJson('https://webappdev.info:8081/uniqueroutelist', setShowLoading, setToastText, setToastTrigger);
         setRotueList(data1);
 
@@ -78,20 +102,136 @@ const QuickSearch = ({locationMain}) => {
         {
             var newInputRoutes = urlParams.get('query');
             setInputRoutes(newInputRoutes); 
-            setIsSearch(true);
+            setTriggerSearch(true);
         }
         
         setShowContent(true); 
     }
 
-    async function onClickSearch()
+    async function buildEtaList()
     {
-        setShowLoading(true);
-        setIsSearch(true);
+        if (triggerBuildEtaList)
+        {
+            setShowLoading(true);
+            if (inputRoutes != '')
+            {
+                urlParams.set('query', inputRoutes);
+                navigate('?' + urlParams.toString());
+    
+                var newEtaList = [];
+                var inputRoutesArray = inputRoutes.split('/');
+    
+                for (var i=0 ; i<inputRoutesArray.length ; i++)
+                {
+                    var currRouteIdArray = ['kmb' + inputRoutesArray[i] + '_I1','kmb' + inputRoutesArray[i] + '_O1',
+                                            'ctb' + inputRoutesArray[i] + '_I1','ctb' + inputRoutesArray[i] + '_O1',
+                                            'kmbctb' + inputRoutesArray[i] + '_I1','kmbctb' + inputRoutesArray[i] + '_O1',];
+        
+                    for (var j=0 ; j<currRouteIdArray.length ; j++)
+                    {
+                        if (currRouteIdArray[j] in routeStopList)
+                        {
+                            var closestStop = findClosestStop(locationMain[0], locationMain[1], routeStopList[currRouteIdArray[j]]);
+    
+                            if (closestStop != null) 
+                            {
+                                closestStop['eta1'] = '-';
+                                closestStop['eta2'] = '-';
+                                closestStop['eta3'] = '-';
+                                newEtaList.push(closestStop);
+                            }
+                        }  
+                    }
+                }
+    
+                setSuggestList({});
+                setEtaList(newEtaList);
+                setTriggerDownload((prev) => prev+1);
+            }
+            else
+            {
+                setSuggestList({});
+                setEtaList([]);
+                setToastTrigger((prev) => prev+1);
+                setToastText(pleaseInputRoutes[lang]);
+            }
+            setTriggerBuildEtaList(false);
+            setShowLoading(false);
+        }
+    }
+
+    async function downloadEta(){
+        const updateElementByIndex = (index, newValue) => {
+            setEtaList(prevArray => {
+              const updatedArray = [...prevArray];
+              updatedArray[index] = newValue;
+              return updatedArray;
+            });
+        };
+
+        if (triggerDownload)
+        {
+            if (etaList.length > 0)
+            {
+                try
+                {
+                    console.log('download');
+                    for (var i=0 ; i<etaList.length ; i++)
+                    {
+                        var currItem = etaList[i];
+                        var company = etaList[i]['company'];
+        
+                        if (company == 'kmb')
+                        {
+                            const url = `https://data.etabus.gov.hk/v1/transport/kmb/eta/${currItem['stop']}/${currItem['route']}/1`;
+                            const response = await axios.get(url);
+                            const resultArray = extractKmbEta(response.data, etaList[i]['direction']);
+                            etaList[i]['eta1'] = resultArray[0];
+                            etaList[i]['eta2'] = resultArray[1];
+                            etaList[i]['eta3'] = resultArray[2];
+                        }
+                        else if (company == 'ctb')
+                        {
+                            const url = `https://rt.data.gov.hk/v2/transport/citybus/eta/ctb/${currItem['stop']}/${currItem['route']}`;
+                            const response = await axios.get(url);
+                            const resultArray = extractCtbEta(response.data, etaList[i]['direction']);
+                            etaList[i]['eta1'] = resultArray[0];
+                            etaList[i]['eta2'] = resultArray[1];
+                            etaList[i]['eta3'] = resultArray[2];
+                        }
+                        else if (company == 'kmbctb')
+                        {
+                            const urlKmb = `https://data.etabus.gov.hk/v1/transport/kmb/eta/${currItem['stop']}/${currItem['route']}/1`;
+                            const responseKmb = await axios.get(urlKmb);
+                            const resultArrayKmb = extractKmbEta(responseKmb.data, etaList[i]['direction']);
+        
+                            const urlCtb = `https://rt.data.gov.hk/v2/transport/citybus/eta/ctb/${currItem['coopStop']}/${currItem['route']}`;
+                            const responseCtb = await axios.get(urlCtb);
+                            const resultArrayCtb = extractCtbEta(responseCtb.data, etaList[i]['coopDir']);
+        
+                            const combinedArray = [...resultArrayKmb, ...resultArrayCtb];
+                            const resultArray = sortCoopEta(combinedArray);
+        
+                            etaList[i]['eta1'] = resultArray[0];
+                            etaList[i]['eta2'] = resultArray[1];
+                            etaList[i]['eta3'] = resultArray[2];
+                        }
+                        updateElementByIndex(i, etaList[i]);
+                    }
+                    setTriggerAutoDownload(true);
+                }
+                catch(error)
+                {
+                    setToastText(unableToDownloadETA[lang]);
+                    setToastTrigger((prev) => prev+1);
+                }
+            }
+            setTriggerDownload(false);
+        }
     }
 
     async function onChangeInputRoutes(letter){
-        setAutoDownload(false);
+        setTriggerAutoDownload(false);
         setEtaList([]);
         var currInput = inputRoutes;
         var newInput = '';
@@ -198,7 +338,7 @@ const QuickSearch = ({locationMain}) => {
             <div style={{height:'100vh'}}>
 
                 {/* ===== APP BAR ===== */}
-                <AppBar leftIcon={''} Header={quickSearch[lang]} rightIcon={''}></AppBar>
+                <AppBar leftIcon={backBtn} Header={quickSearch[lang]} rightIcon={''}></AppBar>
 
                 <Fade in={showContent} appear={true} style={{transitionDuration: '0.3s'}}>
                     <div style={{height:'calc(100vh - 50px)'}}>
@@ -307,7 +447,7 @@ const QuickSearch = ({locationMain}) => {
                                                 <Button variant="danger" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('backspace')}><Icon.Backspace/></Button>
                                                 <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('0')}>0</Button>
                                                 <Button variant="primary" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('/')}>/</Button>
-                                                <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => onClickSearch()}><Icon.Search/></Button>
+                                                <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => {setTriggerSearch(true)}}><Icon.Search/></Button>
                                             </div>
                                         </div>
 
