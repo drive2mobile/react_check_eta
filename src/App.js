@@ -8,6 +8,7 @@ import ToastAlert from "./ui_components/ToastAlert";
 import { pleaseAllowBrowserToAccessLocation } from "./utilities/Locale";
 import OSMMAP from "./pages/backup/OSM_backup";
 import HomePage from "./pages/HomePage";
+import Storage from "./pages/Storage";
 
 function App() {
     const [startGettingLocation, setStartGettingLocation] = useState(false);
@@ -50,6 +51,7 @@ function App() {
                 <Route exact path='/quickSearch' element={<QuickSearch locationMain={location} setStartGettingLocation={setStartGettingLocation}/>}> </Route>
                 <Route exact path='/osm' element={<OSMMAP/>}></Route>
                 <Route exact path='/routedetails' element={<RouteDetails locationMain={location} />}></Route>
+                <Route exact path='/storage' element={<Storage/>}></Route>
             </Routes>
         </BrowserRouter>
     );

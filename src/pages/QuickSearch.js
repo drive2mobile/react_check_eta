@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Form, Button, Fade } from 'react-bootstrap';
-import { findClosestStop } from '../utilities/LocationUtility';
+import { findClosestStop, roundDown } from '../utilities/LocationUtility';
 import { ctb, enterMultipleRoutes, kmb, kmbctb, minute, pleaseInputRoutes, quickSearch, to, unableToDownloadETA } from '../utilities/Locale';
 import { extractCtbEta, extractKmbEta, sortCoopEta, downloadJson } from '../utilities/JsonHandler';
 import { useNavigate } from 'react-router-dom';
@@ -10,9 +10,11 @@ import SpinnerFullscreen from '../ui_components/SpinnerFullscreen';
 import ToastAlert from '../ui_components/ToastAlert';
 import axios from 'axios';
 import * as Icon from 'react-bootstrap-icons';
+import { getStorageItem, getStorageItemDB, setStorageItem, setStorageItemDB } from '../utilities/LocalStorage';
+import { now } from 'moment';
 
 const QuickSearch = ({locationMain, setStartGettingLocation}) => {
-    var backBtn = <Icon.ArrowLeft onClick={() => navigate('/')} style={{width:'50px', height:'50px', padding:'10px'}} />;
+    var backBtn = <Icon.ArrowLeft onClick={() => navigate('/', { replace: true })} style={{width:'50px', height:'50px', padding:'10px'}} />;
     const navigate = useNavigate();
     const urlParams = new URLSearchParams(window.location.search);
     const[lang, setLang] = useState('tc');
@@ -29,14 +31,18 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
     const[routeList, setRotueList] = useState({});
 
     const[inputRoutes, setInputRoutes] = useState('');
-    const[suggestList, setSuggestList] = useState({});
+    const[suggestList, setSuggestList] = useState([]);
     const[etaList, setEtaList] = useState([]);
 
     const[triggerSearch, setTriggerSearch] = useState(false);
     const[triggerBuildEtaList, setTriggerBuildEtaList] = useState(false);
     const[triggerDownload, setTriggerDownload] = useState(false);
     const[triggerAutoDownload, setTriggerAutoDownload] = useState(false);
-    
+
+    const[history, setHistory] = useState({});
+    const[displayHistory, setDisplayHistory] = useState([]);
+    var validQuery = {};
+
     useEffect(() => {
         initialize();
     },[]);
@@ -48,6 +54,10 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
         {
             setTriggerBuildEtaList(true);
             setTriggerSearch(false);
+        }
+        if (locationMain.length != 0)
+        {
+            buildHistory();
         }
     },[locationMain, triggerSearch])
 
@@ -90,13 +100,55 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
 
     async function initialize(){
         setStartGettingLocation(true);
-        const data1 = await downloadJson('https://webappdev.info:8081/uniqueroutelist', setShowLoading, setToastText, setToastTrigger);
-        setRotueList(data1);
 
-        const data2 = await downloadJson(`https://webappdev.info:8081/kmbroutestoplist`, setShowLoading, setToastText, setToastTrigger);
-        const data3 = await downloadJson(`https://webappdev.info:8081/ctbroutestoplist`, setShowLoading, setToastText, setToastTrigger);
-        const data4 = { ...data2, ...data3 };
-        setRouteStopList(data4);
+        var uniqueRouteList = await getStorageItemDB('uniqueRouteList');
+        if (Object.keys(uniqueRouteList).length == 0)
+        {
+            uniqueRouteList = await downloadJson('https://webappdev.info:8081/uniqueroutelist', setShowLoading, setToastText, setToastTrigger);
+            setStorageItemDB('uniqueRouteList', uniqueRouteList);
+        }   
+        setRotueList(uniqueRouteList);
+
+        var routeStopListData = null;
+        var routeStopList1 = await getStorageItemDB('routeStopList1');
+        var routeStopList2 = await getStorageItemDB('routeStopList2');
+        var routeStopList3 = await getStorageItemDB('routeStopList3');
+        var routeStopList4 = await getStorageItemDB('routeStopList4');
+        var routeStopList5 = await getStorageItemDB('routeStopList5');
+        var routeStopList6 = await getStorageItemDB('routeStopList6');
+
+        if (Object.keys(routeStopList1).length == 0 || Object.keys(routeStopList2).length == 0 || 
+            Object.keys(routeStopList3).length == 0 || Object.keys(routeStopList4).length == 0 || 
+            Object.keys(routeStopList5).length == 0 || Object.keys(routeStopList6).length == 0)
+        {
+            const kmbRouteStopList = await downloadJson(`https://webappdev.info:8081/kmbroutestoplist`, setShowLoading, setToastText, setToastTrigger);
+            const ctbRouteStopList = await downloadJson(`https://webappdev.info:8081/ctbroutestoplist`, setShowLoading, setToastText, setToastTrigger);
+
+            routeStopListData = { ...kmbRouteStopList, ...ctbRouteStopList };
+
+            const originalEntries = Object.entries(routeStopListData);
+            const originalEntriesCount = originalEntries.length;
+            const midpoint = Math.ceil(originalEntriesCount / 6);
+            
+            const routeStopList1 = Object.fromEntries(originalEntries.slice(0, midpoint));
+            const routeStopList2 = Object.fromEntries(originalEntries.slice(midpoint, midpoint*2));
+            const routeStopList3 = Object.fromEntries(originalEntries.slice(midpoint*2, midpoint*3));
+            const routeStopList4 = Object.fromEntries(originalEntries.slice(midpoint*3, midpoint*4));
+            const routeStopList5 = Object.fromEntries(originalEntries.slice(midpoint*4, midpoint*5));
+            const routeStopList6 = Object.fromEntries(originalEntries.slice(midpoint*5));
+
+            setStorageItemDB('routeStopList1', routeStopList1);
+            setStorageItemDB('routeStopList2', routeStopList2);
+            setStorageItemDB('routeStopList3', routeStopList3);
+            setStorageItemDB('routeStopList4', routeStopList4);
+            setStorageItemDB('routeStopList5', routeStopList5);
+            setStorageItemDB('routeStopList6', routeStopList6);
+        }
+        else
+        {
+            routeStopListData = { ...routeStopList1, ...routeStopList2, ...routeStopList3, ...routeStopList4, ...routeStopList5, ...routeStopList6 };
+        }
+        setRouteStopList(routeStopListData);
 
         if (urlParams.has('query'))
         {
@@ -108,6 +160,25 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
         setShowContent(true); 
     }
 
+    async function buildHistory()
+    {
+        console.log('history');
+        var historyTemp = await getStorageItem('item1');
+        var latRoundDown = roundDown(locationMain[0].toString());
+        var longRoundDown = roundDown(locationMain[1].toString());
+        var theKey = latRoundDown + '_' + longRoundDown;
+
+        console.log(theKey);
+        if (historyTemp == null)
+            historyTemp = {};
+        if (theKey in historyTemp)
+        {
+            setDisplayHistory(historyTemp[theKey]);
+            console.log(historyTemp[theKey]);
+        }
+
+    }
+
     async function buildEtaList()
     {
         if (triggerBuildEtaList)
@@ -116,7 +187,9 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
             if (inputRoutes != '')
             {
                 urlParams.set('query', inputRoutes);
-                navigate('?' + urlParams.toString());
+                navigate('?' + urlParams.toString(), { replace: true });
+
+                var validQuery = '';
     
                 var newEtaList = [];
                 var inputRoutesArray = inputRoutes.split('/');
@@ -131,7 +204,10 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
                     {
                         if (currRouteIdArray[j] in routeStopList)
                         {
-                            var closestStop = findClosestStop(locationMain[0], locationMain[1], routeStopList[currRouteIdArray[j]]);
+                            if (validQuery != '') { validQuery += ','; }
+                            validQuery += inputRoutesArray[j];
+
+                            var closestStop = findClosestStop(locationMain[0].toString(), locationMain[1].toString(), routeStopList[currRouteIdArray[j]]);
     
                             if (closestStop != null) 
                             {
@@ -144,13 +220,35 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
                     }
                 }
     
-                setSuggestList({});
+                if (validQuery != '')
+                {
+                    var itemTemp = await getStorageItem('item1');
+                    if (itemTemp == null)
+                        itemTemp = {};
+
+                    var latRoundDown = roundDown(locationMain[0].toString());
+                    var longRoundDown = roundDown(locationMain[1].toString());
+                    var theKey = latRoundDown + '_' + longRoundDown;
+
+                    var arr = {};
+                    if (theKey in itemTemp)
+                    {
+                        arr = itemTemp[theKey];
+                    }
+                    arr[inputRoutes] = inputRoutes;
+
+                    itemTemp[theKey] = arr;
+
+                    setStorageItem('item1', itemTemp);
+                }
+
+                setSuggestList([]);
                 setEtaList(newEtaList);
                 setTriggerDownload((prev) => prev+1);
             }
             else
             {
-                setSuggestList({});
+                setSuggestList([]);
                 setEtaList([]);
                 setToastTrigger((prev) => prev+1);
                 setToastText(pleaseInputRoutes[lang]);
@@ -158,6 +256,8 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
             setTriggerBuildEtaList(false);
             setShowLoading(false);
         }
+
+        
     }
 
     async function downloadEta(){
@@ -244,6 +344,7 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
         else if (letter == 'clear')
         {
             newInput = '';
+            navigate('', { replace: true });
         }
         else if (letter == '/')
         {
@@ -277,7 +378,7 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
                 var lastInput = existInputArray[existInputArray.length-1];
                 if (lastInput != '')
                 {
-                    setSuggestList({});
+                    setSuggestList([]);
                     var newSuggestList = [];
                     for (const key in routeList)
                     {
@@ -302,11 +403,11 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
         }
         else
         {
-            setSuggestList({});
+            setSuggestList([]);
         }
 
         if (newInput.charAt(newInput.length - 1) == '/')
-            setSuggestList({});
+            setSuggestList([]);
 
         setInputRoutes(newInput);
     }
@@ -340,9 +441,10 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
                 {/* ===== APP BAR ===== */}
                 <AppBar leftIcon={backBtn} Header={quickSearch[lang]} rightIcon={''}></AppBar>
 
+                
                 <Fade in={showContent} appear={true} style={{transitionDuration: '0.3s'}}>
                     <div style={{height:'calc(100vh - 50px)'}}>
-
+                    
                         {/* ===== ROUTE INPUT ===== */}
                         <div style={{height:'60px', display:'flex', direction:'column', alignContent:'center', padding:'5px'}}>
                             <Form.Control type="text" value={inputRoutes} placeholder={enterMultipleRoutes[lang]} readOnly={true}/>
@@ -364,6 +466,14 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
                                 <Fade in={true} appear={true} key={index} >
                                     <div style={{height:'60px', width:'25%', display:'inline-block', textAlign:'center', lineHeight:'52px'}}>
                                         <div style={{margin:'4px', height:'52px', backgroundColor:'#F4F4F4'}} onClick={() => onClickRouteSuggestion(item)}>{item}</div>
+                                    </div>
+                                </Fade>
+                            ))}
+
+                            {(suggestList.length == 0 && etaList.length == 0) && Object.entries(displayHistory).map(([key, value]) => (
+                                <Fade in={true} appear={true} key={key} >
+                                    <div style={{height:'60px', width:'100%', display:'inline-block', textAlign:'center', lineHeight:'52px'}}>
+                                        <div style={{margin:'4px', height:'52px', backgroundColor:'#F4F4F4'}} onClick={() => onClickRouteSuggestion(key)}>{key}</div>
                                     </div>
                                 </Fade>
                             ))}

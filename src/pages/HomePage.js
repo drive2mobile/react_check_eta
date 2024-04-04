@@ -15,7 +15,7 @@ const HomePage = () => {
                 <div style={{height:'100dvh'}}>
                     <div style={{ height: 'calc(100dvh - 100px - 200px)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', fontSize: '25px', textAlign: 'center' }}>
                         <div>
-                            <img src={ragdoll1} style={{ width: '50%', height: 'auto', padding: '0px', border: '0px solid black', borderRadius: '15px' }} />
+                            <img src={`https://webappdev.info/checketatest/picture/ragdoll1.jpg`} style={{ width: '50%', height: 'auto', padding: '0px', border: '0px solid black', borderRadius: '15px' }} />
                         </div>
                         <div>
                             香港巴士到站查詢

@@ -10,6 +10,7 @@ import SpinnerFullscreen from "../ui_components/SpinnerFullscreen";
 import * as Icon from 'react-bootstrap-icons';
 import { downloadJson, extractCtbEta, extractKmbEta, sortCoopEta } from "../utilities/JsonHandler";
 import axios from "axios";
+import { getStorageItemDB, setStorageItemDB } from "../utilities/LocalStorage";
 
 const RouteDetails = ({locationMain}) => {
 
@@ -20,7 +21,7 @@ const RouteDetails = ({locationMain}) => {
 
     const[route, setRoute] = useState(null);
     const[dest, setDest] = useState(null);
-    var backBtn = <Icon.ArrowLeft onClick={() => navigate(-1)} style={{width:'50px', height:'50px', padding:'10px'}} />;
+    var backBtn = <Icon.ArrowLeft onClick={() => navigate(-1, { replace: true })} style={{width:'50px', height:'50px', padding:'10px'}} />;
     var appBarHeader = <span>{route} <span style={{fontSize:'14px'}}> &ensp;&ensp;往 </span> {dest}</span>;
     
     const[showLoading, setShowLoading] = useState(false);
@@ -88,16 +89,53 @@ const RouteDetails = ({locationMain}) => {
 
     async function initialize(){
         setShowLoading(true);
-        const data4 = await downloadJson(`https://webappdev.info:8081/kmbroutestoplist`, setShowLoading, setToastText, setToastTrigger);
-        const data5 = await downloadJson(`https://webappdev.info:8081/ctbroutestoplist`, setShowLoading, setToastText, setToastTrigger);
-        const data6 = { ...data4, ...data5 };
+       
+        var routeStopListData = null;
+        var routeStopList1 = await getStorageItemDB('routeStopList1');
+        var routeStopList2 = await getStorageItemDB('routeStopList2');
+        var routeStopList3 = await getStorageItemDB('routeStopList3');
+        var routeStopList4 = await getStorageItemDB('routeStopList4');
+        var routeStopList5 = await getStorageItemDB('routeStopList5');
+        var routeStopList6 = await getStorageItemDB('routeStopList6');
+
+        if (Object.keys(routeStopList1).length == 0 || Object.keys(routeStopList2).length == 0 || 
+            Object.keys(routeStopList3).length == 0 || Object.keys(routeStopList4).length == 0 || 
+            Object.keys(routeStopList5).length == 0 || Object.keys(routeStopList6).length == 0)
+        {
+            const kmbRouteStopList = await downloadJson(`https://webappdev.info:8081/kmbroutestoplist`, setShowLoading, setToastText, setToastTrigger);
+            const ctbRouteStopList = await downloadJson(`https://webappdev.info:8081/ctbroutestoplist`, setShowLoading, setToastText, setToastTrigger);
+
+            routeStopListData = { ...kmbRouteStopList, ...ctbRouteStopList };
+
+            const originalEntries = Object.entries(routeStopListData);
+            const originalEntriesCount = originalEntries.length;
+            const midpoint = Math.ceil(originalEntriesCount / 6);
+            
+            const routeStopList1 = Object.fromEntries(originalEntries.slice(0, midpoint));
+            const routeStopList2 = Object.fromEntries(originalEntries.slice(midpoint, midpoint*2));
+            const routeStopList3 = Object.fromEntries(originalEntries.slice(midpoint*2, midpoint*3));
+            const routeStopList4 = Object.fromEntries(originalEntries.slice(midpoint*3, midpoint*4));
+            const routeStopList5 = Object.fromEntries(originalEntries.slice(midpoint*4, midpoint*5));
+            const routeStopList6 = Object.fromEntries(originalEntries.slice(midpoint*5));
+
+            setStorageItemDB('routeStopList1', routeStopList1);
+            setStorageItemDB('routeStopList2', routeStopList2);
+            setStorageItemDB('routeStopList3', routeStopList3);
+            setStorageItemDB('routeStopList4', routeStopList4);
+            setStorageItemDB('routeStopList5', routeStopList5);
+            setStorageItemDB('routeStopList6', routeStopList6);
+        }
+        else
+        {
+            routeStopListData = { ...routeStopList1, ...routeStopList2, ...routeStopList3, ...routeStopList4, ...routeStopList5, ...routeStopList6 };
+        }
 
         const routeid = urlParams.get('routeid');
         const seq = urlParams.has('seq') ? parseInt(urlParams.get('seq')) : 0;
         
-        if (routeid in data6)
+        if (routeid in routeStopListData)
         {   
-            var routeStopList = data6[routeid];
+            var routeStopList = routeStopListData[routeid];
             routeStopList[seq]['show'] = true;
             setRoute(routeStopList[0]['route']);
             setDest(routeStopList[0]['dest_' + lang]);

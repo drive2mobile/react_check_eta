@@ -27,6 +27,7 @@ let CustomIcon = new Icon({
 const OSM = ({lang, fullscreen, selectedIndex, setFullscreen, mapLocation, stopMarkers, locationMain, 
     setSelectedIndex, setTriggerScrollToIndex, setTriggerShowMarkerLabel, setTriggerDownload}) => {
     const mapRef = useRef(null);
+    const markerRef = useRef(null);
     const containerRef = useRef(null);
     const [userLocation, setUserLocation] = useState(null);
     const [autoCenter, setAutoCenter] = useState(false);
@@ -34,7 +35,18 @@ const OSM = ({lang, fullscreen, selectedIndex, setFullscreen, mapLocation, stopM
     
     useEffect(() => {
         if (locationMain.length > 0)
+        {
             setUserLocation(locationMain);
+            if (markerRef.current) {
+                const marker = markerRef.current;
+                const previousLatLng = marker.getLatLng();
+                const newLatLng = L.latLng(locationMain[0], locationMain[1]);
+          
+                if (previousLatLng && !previousLatLng.equals(newLatLng)) {
+                  marker.setLatLng(newLatLng, { duration: 0.5, easeLinearity: 0.25 });
+                }
+            }
+        }
     }, [locationMain]);
 
     useEffect(() => {
@@ -99,7 +111,7 @@ const OSM = ({lang, fullscreen, selectedIndex, setFullscreen, mapLocation, stopM
                 />
                 {autoCenter ? <SetMapView /> : ''}
                 {autoCenterUserLocation ? <SetMapViewToUserLocation/> : ''}
-                {userLocation ? <Marker position={userLocation} icon={CustomIcon}></Marker> : ''}
+                {userLocation ? <Marker ref={markerRef} position={userLocation} icon={CustomIcon}></Marker> : ''}
 
                 {stopMarkers ? stopMarkers.map((item, index) => (
                     <Marker key={index} position={[item.lat, item.long]} eventHandlers={{ click: onClickMarker(index) }} >
