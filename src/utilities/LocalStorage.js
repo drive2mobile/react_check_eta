@@ -29,8 +29,8 @@ async function setStorageItemDB(key, value) {
         request.onsuccess = function (event) {
             const db = event.target.result;
 
-            const transaction = db.transaction(['RotueStopList'], 'readwrite');
-            const objectStore = transaction.objectStore('RotueStopList');
+            const transaction = db.transaction(['CheckEtaTable'], 'readwrite');
+            const objectStore = transaction.objectStore('CheckEtaTable');
 
             const putRequest = objectStore.put(value, key);
 
@@ -49,7 +49,7 @@ async function setStorageItemDB(key, value) {
 
         request.onupgradeneeded = function (event) {
             const db = event.target.result;
-            db.createObjectStore('RotueStopList');
+            db.createObjectStore('CheckEtaTable');
         };
     });
 }
@@ -65,8 +65,8 @@ async function getStorageItemDB(key) {
       request.onsuccess = function(event) {
         const db = event.target.result;
   
-        const transaction = db.transaction(['RotueStopList'], 'readonly');
-        const objectStore = transaction.objectStore('RotueStopList');
+        const transaction = db.transaction(['CheckEtaTable'], 'readonly');
+        const objectStore = transaction.objectStore('CheckEtaTable');
   
         const getRequest = objectStore.get(key);
   
@@ -90,7 +90,7 @@ async function getStorageItemDB(key) {
   
       request.onupgradeneeded = function(event) {
         const db = event.target.result;
-        db.createObjectStore('RotueStopList');
+        db.createObjectStore('CheckEtaTable');
       };
     });
   }

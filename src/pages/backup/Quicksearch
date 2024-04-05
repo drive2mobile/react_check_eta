@@ -102,16 +102,24 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
         setStartGettingLocation(true);
 
         var uniqueRouteList = await getStorageItemDB('uniqueRouteList');
-        var routeStopListData = await getStorageItemDB('routeStopList');
-        if (Object.keys(uniqueRouteList).length == 0 || Object.keys(routeStopListData).length == 0)
+        if (Object.keys(uniqueRouteList).length == 0)
         {
-            navigate('/downloaddata?prevpage=quicksearch', { replace: true });
+            uniqueRouteList = await downloadJson('https://webappdev.info:8081/uniqueroutelist', setShowLoading, setToastText, setToastTrigger);
+            setStorageItemDB('uniqueRouteList', uniqueRouteList);
         }   
-        else
+        setRotueList(uniqueRouteList);
+
+        var routeStopListData = await getStorageItemDB('routeStopList');
+        if (Object.keys(routeStopListData).length == 0 )
         {
-            setRotueList(uniqueRouteList);
-            setRouteStopList(routeStopListData);
+            const kmbRouteStopList = await downloadJson(`https://webappdev.info:8081/kmbroutestoplist`, setShowLoading, setToastText, setToastTrigger);
+            const ctbRouteStopList = await downloadJson(`https://webappdev.info:8081/ctbroutestoplist`, setShowLoading, setToastText, setToastTrigger);
+
+            routeStopListData = { ...kmbRouteStopList, ...ctbRouteStopList };
+
+            setStorageItemDB('routeStopList', routeStopListData);
         }
+        setRouteStopList(routeStopListData);
 
         if (urlParams.has('query'))
         {

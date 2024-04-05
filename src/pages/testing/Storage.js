@@ -1,5 +1,5 @@
 import { Button } from "react-bootstrap";
-import { getStorageItem, setStorageItem } from "../utilities/LocalStorage";
+import { getStorageItem, setStorageItem } from "../../utilities/LocalStorage";
 
 const Storage = () => {
     var savedItem = {};

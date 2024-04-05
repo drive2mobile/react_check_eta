@@ -8,5 +8,9 @@ const kmb = {'tc':'九巴', 'sc':'九巴', 'en':'KMB'};
 const ctb = {'tc':'城巴', 'sc':'城巴', 'en':'CTB'};
 const kmbctb = {'tc':'九巴/城巴', 'sc':'九巴/城巴', 'en':'KMB/CTB'};
 const unableToDownloadETA = {'tc':'未能下載到站預報', 'sc':'未能下載到站預報', 'en':'Unable To Dwonload ETA'};
+const downloadData = {'tc':'下載資料', 'sc':'下載資料', 'en':'Download Data'};
+const downloadingData = {'tc':'正在下載路線資料', 'sc':'正在下載路線資料', 'en':'Download Route Data In Progress'};
+const downloadComplete = {'tc':'下載完成', 'sc':'下載完成', 'en':'Download Complete'};
 
-export { quickSearch, enterMultipleRoutes, to, minute, pleaseAllowBrowserToAccessLocation, kmb, ctb, kmbctb, pleaseInputRoutes, unableToDownloadETA }
+export { quickSearch, enterMultipleRoutes, to, minute, pleaseAllowBrowserToAccessLocation, 
+    kmb, ctb, kmbctb, pleaseInputRoutes, unableToDownloadETA, downloadData, downloadingData, downloadComplete }

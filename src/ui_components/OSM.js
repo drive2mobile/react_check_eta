@@ -122,11 +122,12 @@ const OSM = ({lang, fullscreen, selectedIndex, setFullscreen, mapLocation, stopM
                         }
                     </Marker>
                 )) : ''}
-                <div style={{position:'absolute', zIndex:'1000', right:'10px', top:'10px'}}>
+
+                {userLocation ? <div style={{position:'absolute', zIndex:'1000', right:'10px', top:'10px'}}>
                     <Button variant='light' onClick={() => {setAutoCenterUserLocation(!autoCenterUserLocation)}}>
                         <IconReact.Crosshair/>
                     </Button>
-                </div>
+                </div> : ''}
                 <div style={{position:'absolute', zIndex:'1000', right:'10px', bottom:'20px'}}>
                     <Button variant='light' onClick={() => {setFullscreen(!fullscreen)}}>
                         {fullscreen ? <IconReact.ArrowsAngleContract/> : <IconReact.ArrowsAngleExpand/>}

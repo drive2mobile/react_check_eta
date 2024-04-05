@@ -12,7 +12,7 @@ import { downloadJson, extractCtbEta, extractKmbEta, sortCoopEta } from "../util
 import axios from "axios";
 import { getStorageItemDB, setStorageItemDB } from "../utilities/LocalStorage";
 
-const RouteDetails = ({locationMain}) => {
+const RouteDetails = ({locationMain, setStartGettingLocation}) => {
 
     const urlParams = new URLSearchParams(window.location.search);
     const navigate = useNavigate();
@@ -88,51 +88,18 @@ const RouteDetails = ({locationMain}) => {
     }, [triggerAutoDownload])
 
     async function initialize(){
+        setStartGettingLocation(true);
         setShowLoading(true);
        
-        var routeStopListData = null;
-        var routeStopList1 = await getStorageItemDB('routeStopList1');
-        var routeStopList2 = await getStorageItemDB('routeStopList2');
-        var routeStopList3 = await getStorageItemDB('routeStopList3');
-        var routeStopList4 = await getStorageItemDB('routeStopList4');
-        var routeStopList5 = await getStorageItemDB('routeStopList5');
-        var routeStopList6 = await getStorageItemDB('routeStopList6');
-
-        if (Object.keys(routeStopList1).length == 0 || Object.keys(routeStopList2).length == 0 || 
-            Object.keys(routeStopList3).length == 0 || Object.keys(routeStopList4).length == 0 || 
-            Object.keys(routeStopList5).length == 0 || Object.keys(routeStopList6).length == 0)
-        {
-            const kmbRouteStopList = await downloadJson(`https://webappdev.info:8081/kmbroutestoplist`, setShowLoading, setToastText, setToastTrigger);
-            const ctbRouteStopList = await downloadJson(`https://webappdev.info:8081/ctbroutestoplist`, setShowLoading, setToastText, setToastTrigger);
-
-            routeStopListData = { ...kmbRouteStopList, ...ctbRouteStopList };
-
-            const originalEntries = Object.entries(routeStopListData);
-            const originalEntriesCount = originalEntries.length;
-            const midpoint = Math.ceil(originalEntriesCount / 6);
-            
-            const routeStopList1 = Object.fromEntries(originalEntries.slice(0, midpoint));
-            const routeStopList2 = Object.fromEntries(originalEntries.slice(midpoint, midpoint*2));
-            const routeStopList3 = Object.fromEntries(originalEntries.slice(midpoint*2, midpoint*3));
-            const routeStopList4 = Object.fromEntries(originalEntries.slice(midpoint*3, midpoint*4));
-            const routeStopList5 = Object.fromEntries(originalEntries.slice(midpoint*4, midpoint*5));
-            const routeStopList6 = Object.fromEntries(originalEntries.slice(midpoint*5));
-
-            setStorageItemDB('routeStopList1', routeStopList1);
-            setStorageItemDB('routeStopList2', routeStopList2);
-            setStorageItemDB('routeStopList3', routeStopList3);
-            setStorageItemDB('routeStopList4', routeStopList4);
-            setStorageItemDB('routeStopList5', routeStopList5);
-            setStorageItemDB('routeStopList6', routeStopList6);
-        }
-        else
-        {
-            routeStopListData = { ...routeStopList1, ...routeStopList2, ...routeStopList3, ...routeStopList4, ...routeStopList5, ...routeStopList6 };
-        }
-
         const routeid = urlParams.get('routeid');
         const seq = urlParams.has('seq') ? parseInt(urlParams.get('seq')) : 0;
-        
+
+        var routeStopListData = await getStorageItemDB('routeStopList');
+        if (Object.keys(routeStopListData).length == 0)
+        {
+            navigate(`/downloaddata?prevpage=routedetails&routeid=${routeid}&seq=${seq}`, { replace: true });
+        }   
+
         if (routeid in routeStopListData)
         {   
             var routeStopList = routeStopListData[routeid];

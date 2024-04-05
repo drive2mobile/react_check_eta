@@ -82,3 +82,8 @@ html, body {
     --bs-btn-padding-x: 0rem;
     --bs-btn-padding-y: 0rem;
 }
+
+.bg-success {
+    --bs-bg-opacity: 1;
+    background-color: #bdffb9 !important;
+}

@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import styles from './GeneralSearchStyle.module.css';
 import { Form, Button, Fade } from 'react-bootstrap';
 import { findClosestStop, roundDown } from '../utilities/LocationUtility';
 import { ctb, enterMultipleRoutes, kmb, kmbctb, minute, pleaseInputRoutes, quickSearch, to, unableToDownloadETA } from '../utilities/Locale';
 import { extractCtbEta, extractKmbEta, sortCoopEta, downloadJson } from '../utilities/JsonHandler';
-import { useNavigate } from 'react-router-dom';
 import AppBar from '../ui_components/AppBar';
-import styles from './QuickSearchStyle.module.css';
 import SpinnerFullscreen from '../ui_components/SpinnerFullscreen';
 import ToastAlert from '../ui_components/ToastAlert';
 import axios from 'axios';
@@ -13,12 +13,11 @@ import * as Icon from 'react-bootstrap-icons';
 import { getStorageItem, getStorageItemDB, setStorageItem, setStorageItemDB } from '../utilities/LocalStorage';
 import { now } from 'moment';
 
-const QuickSearch = ({locationMain, setStartGettingLocation}) => {
+const GeneralSearch = ({locationMain, setStartGettingLocation}) => {
     var backBtn = <Icon.ArrowLeft onClick={() => navigate('/', { replace: true })} style={{width:'50px', height:'50px', padding:'10px'}} />;
     const navigate = useNavigate();
     const urlParams = new URLSearchParams(window.location.search);
     const[lang, setLang] = useState('tc');
-    const[timer, setTimer] = useState(null);
 
     const[showKeyboard, setShowKeyboard] = useState(true);
     const[showLoading, setShowLoading] = useState(false);
@@ -32,270 +31,38 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
 
     const[inputRoutes, setInputRoutes] = useState('');
     const[suggestList, setSuggestList] = useState([]);
-    const[etaList, setEtaList] = useState([]);
 
-    const[triggerSearch, setTriggerSearch] = useState(false);
-    const[triggerBuildEtaList, setTriggerBuildEtaList] = useState(false);
-    const[triggerDownload, setTriggerDownload] = useState(false);
-    const[triggerAutoDownload, setTriggerAutoDownload] = useState(false);
-
-    const[history, setHistory] = useState({});
-    const[displayHistory, setDisplayHistory] = useState([]);
-    var validQuery = {};
 
     useEffect(() => {
         initialize();
-    },[]);
+    }, [])
 
-    useEffect(() => {
-        if (triggerSearch)
-            setShowLoading(true);
-        if (triggerSearch && locationMain.length != 0)
-        {
-            setTriggerBuildEtaList(true);
-            setTriggerSearch(false);
-        }
-        if (locationMain.length != 0)
-        {
-            buildHistory();
-        }
-    },[locationMain, triggerSearch])
-
-    useEffect(() => {
-        buildEtaList(); 
-    }, [triggerBuildEtaList])
-
-    useEffect(() => {
-        downloadEta();
-    },[triggerDownload])
-
-    useEffect(() => {
-        let timerConstant = null;
-        if (triggerAutoDownload) 
-        {
-            timerConstant = setInterval(() => {
-                setTriggerDownload(true);
-            }, 1000*30);
-            
-            setTimer(timerConstant);
-        } 
-        else if (triggerAutoDownload === false) 
-        {
-            if (timer) 
-            {
-                clearInterval(timer);
-                setTimer(null);
-            }
-        }
-
-        return () => {
-            if (timer) 
-            {
-                clearInterval(timer);
-                setTimer(null);
-            }
-        };
-
-    }, [triggerAutoDownload])
-
-    async function initialize(){
+    async function initialize()
+    {
         setStartGettingLocation(true);
 
-        var uniqueRouteList = await getStorageItemDB('uniqueRouteList');
-        var routeStopListData = await getStorageItemDB('routeStopList');
-        if (Object.keys(uniqueRouteList).length == 0 || Object.keys(routeStopListData).length == 0)
+        var routeListData = await getStorageItemDB('routeList');
+        if (Object.keys(routeListData).length == 0)
         {
-            navigate('/downloaddata?prevpage=quicksearch', { replace: true });
+            navigate('/downloaddata?prevpage=generalsearch', { replace: true });
         }   
         else
         {
-            setRotueList(uniqueRouteList);
-            setRouteStopList(routeStopListData);
+            setRotueList(routeListData);
         }
 
-        if (urlParams.has('query'))
-        {
-            var newInputRoutes = urlParams.get('query');
-            setInputRoutes(newInputRoutes); 
-            setTriggerSearch(true);
-        }
+        console.log(routeListData);
+        // if (urlParams.has('query'))
+        // {
+        //     var newInputRoutes = urlParams.get('query');
+        //     setInputRoutes(newInputRoutes); 
+        //     setTriggerSearch(true);
+        // }
         
         setShowContent(true); 
     }
 
-    async function buildHistory()
-    {
-        console.log('history');
-        var historyTemp = await getStorageItem('item1');
-        var latRoundDown = roundDown(locationMain[0].toString());
-        var longRoundDown = roundDown(locationMain[1].toString());
-        var theKey = latRoundDown + '_' + longRoundDown;
-
-        console.log(theKey);
-        if (historyTemp == null)
-            historyTemp = {};
-        if (theKey in historyTemp)
-        {
-            setDisplayHistory(historyTemp[theKey]);
-            console.log(historyTemp[theKey]);
-        }
-
-    }
-
-    async function buildEtaList()
-    {
-        if (triggerBuildEtaList)
-        {
-            setShowLoading(true);
-            if (inputRoutes != '')
-            {
-                urlParams.set('query', inputRoutes);
-                navigate('?' + urlParams.toString(), { replace: true });
-
-                var validQuery = '';
-    
-                var newEtaList = [];
-                var inputRoutesArray = inputRoutes.split('/');
-    
-                for (var i=0 ; i<inputRoutesArray.length ; i++)
-                {
-                    var currRouteIdArray = ['kmb' + inputRoutesArray[i] + '_I1','kmb' + inputRoutesArray[i] + '_O1',
-                                            'ctb' + inputRoutesArray[i] + '_I1','ctb' + inputRoutesArray[i] + '_O1',
-                                            'kmbctb' + inputRoutesArray[i] + '_I1','kmbctb' + inputRoutesArray[i] + '_O1',];
-        
-                    for (var j=0 ; j<currRouteIdArray.length ; j++)
-                    {
-                        if (currRouteIdArray[j] in routeStopList)
-                        {
-                            if (validQuery != '') { validQuery += ','; }
-                            validQuery += inputRoutesArray[j];
-
-                            var closestStop = findClosestStop(locationMain[0].toString(), locationMain[1].toString(), routeStopList[currRouteIdArray[j]]);
-    
-                            if (closestStop != null) 
-                            {
-                                closestStop['eta1'] = '-';
-                                closestStop['eta2'] = '-';
-                                closestStop['eta3'] = '-';
-                                newEtaList.push(closestStop);
-                            }
-                        }  
-                    }
-                }
-    
-                if (validQuery != '')
-                {
-                    var itemTemp = await getStorageItem('item1');
-                    if (itemTemp == null)
-                        itemTemp = {};
-
-                    var latRoundDown = roundDown(locationMain[0].toString());
-                    var longRoundDown = roundDown(locationMain[1].toString());
-                    var theKey = latRoundDown + '_' + longRoundDown;
-
-                    var arr = {};
-                    if (theKey in itemTemp)
-                    {
-                        arr = itemTemp[theKey];
-                    }
-                    arr[inputRoutes] = inputRoutes;
-
-                    itemTemp[theKey] = arr;
-
-                    setStorageItem('item1', itemTemp);
-                }
-
-                setSuggestList([]);
-                setEtaList(newEtaList);
-                setTriggerDownload((prev) => prev+1);
-            }
-            else
-            {
-                setSuggestList([]);
-                setEtaList([]);
-                setToastTrigger((prev) => prev+1);
-                setToastText(pleaseInputRoutes[lang]);
-            }
-            setTriggerBuildEtaList(false);
-            setShowLoading(false);
-        }
-
-        
-    }
-
-    async function downloadEta(){
-        const updateElementByIndex = (index, newValue) => {
-            setEtaList(prevArray => {
-              const updatedArray = [...prevArray];
-              updatedArray[index] = newValue;
-              return updatedArray;
-            });
-        };
-
-        if (triggerDownload)
-        {
-            if (etaList.length > 0)
-            {
-                try
-                {
-                    console.log('download');
-                    for (var i=0 ; i<etaList.length ; i++)
-                    {
-                        var currItem = etaList[i];
-                        var company = etaList[i]['company'];
-        
-                        if (company == 'kmb')
-                        {
-                            const url = `https://data.etabus.gov.hk/v1/transport/kmb/eta/${currItem['stop']}/${currItem['route']}/1`;
-                            const response = await axios.get(url);
-                            const resultArray = extractKmbEta(response.data, etaList[i]['direction']);
-                            etaList[i]['eta1'] = resultArray[0];
-                            etaList[i]['eta2'] = resultArray[1];
-                            etaList[i]['eta3'] = resultArray[2];
-                        }
-                        else if (company == 'ctb')
-                        {
-                            const url = `https://rt.data.gov.hk/v2/transport/citybus/eta/ctb/${currItem['stop']}/${currItem['route']}`;
-                            const response = await axios.get(url);
-                            const resultArray = extractCtbEta(response.data, etaList[i]['direction']);
-                            etaList[i]['eta1'] = resultArray[0];
-                            etaList[i]['eta2'] = resultArray[1];
-                            etaList[i]['eta3'] = resultArray[2];
-                        }
-                        else if (company == 'kmbctb')
-                        {
-                            const urlKmb = `https://data.etabus.gov.hk/v1/transport/kmb/eta/${currItem['stop']}/${currItem['route']}/1`;
-                            const responseKmb = await axios.get(urlKmb);
-                            const resultArrayKmb = extractKmbEta(responseKmb.data, etaList[i]['direction']);
-        
-                            const urlCtb = `https://rt.data.gov.hk/v2/transport/citybus/eta/ctb/${currItem['coopStop']}/${currItem['route']}`;
-                            const responseCtb = await axios.get(urlCtb);
-                            const resultArrayCtb = extractCtbEta(responseCtb.data, etaList[i]['coopDir']);
-        
-                            const combinedArray = [...resultArrayKmb, ...resultArrayCtb];
-                            const resultArray = sortCoopEta(combinedArray);
-        
-                            etaList[i]['eta1'] = resultArray[0];
-                            etaList[i]['eta2'] = resultArray[1];
-                            etaList[i]['eta3'] = resultArray[2];
-                        }
-                        updateElementByIndex(i, etaList[i]);
-                    }
-                    setTriggerAutoDownload(true);
-                }
-                catch(error)
-                {
-                    setToastText(unableToDownloadETA[lang]);
-                    setToastTrigger((prev) => prev+1);
-                }
-            }
-            setTriggerDownload(false);
-        }
-    }
-
     async function onChangeInputRoutes(letter){
-        setTriggerAutoDownload(false);
-        setEtaList([]);
         var currInput = inputRoutes;
         var newInput = '';
 
@@ -375,23 +142,8 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
         setInputRoutes(newInput);
     }
 
-    async function onClickRouteSuggestion(route){
-        var currInput = inputRoutes;
-        var currInputArray = currInput.split('/');
-        var newInput = '';
-
-        for(var i=0 ; i<currInputArray.length-1 ; i++)
-        {
-            newInput += currInputArray[i] + '/';
-        }
-
-        newInput += route + '/';
-        setInputRoutes(newInput);
-    }
-
     return (
         <div className={styles.body}>
-
             {/* ===== LOADING SPINNER ===== */}
             <SpinnerFullscreen showLoading={showLoading}/>
 
@@ -425,59 +177,27 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
                             flexDirection:'row', justifyContent:'flex-start', flexWrap:'wrap', overflow: 'auto', scrollbarWidth: 'none',} 
                         }>
 
-                            {suggestList.length > 0 && suggestList.map((item, index) => (
-                                <Fade in={true} appear={true} key={index} >
-                                    <div style={{height:'60px', width:'25%', display:'inline-block', textAlign:'center', lineHeight:'52px'}}>
-                                        <div style={{margin:'4px', height:'52px', backgroundColor:'#F4F4F4'}} onClick={() => onClickRouteSuggestion(item)}>{item}</div>
-                                    </div>
-                                </Fade>
-                            ))}
-
-                            {(suggestList.length == 0 && etaList.length == 0) && Object.entries(displayHistory).map(([key, value]) => (
-                                <Fade in={true} appear={true} key={key} >
-                                    <div style={{height:'60px', width:'100%', display:'inline-block', textAlign:'center', lineHeight:'52px'}}>
-                                        <div style={{margin:'4px', height:'52px', backgroundColor:'#F4F4F4'}} onClick={() => onClickRouteSuggestion(key)}>{key}</div>
-                                    </div>
-                                </Fade>
-                            ))}
-
-                            {etaList.length > 0 && etaList.map((item, index) => (
-                                <Fade in={true} appear={true} key={index}>
-                                    <div style={{height:'74px', width:'100%', display:'block', textAlign:'center'}} onClick={() => { navigate('/routedetails?routeid='+item['route_id']+'&seq='+(parseInt(item['seq'])-1)); }}>
+                            {Object.keys(routeList).length > 0 && Object.entries(routeList).map(([key, value]) => (
+                                <Fade in={true} appear={true} key={key}>
+                                    <div style={{height:'74px', width:'100%', display:'block', textAlign:'center'}} onClick={() => { navigate('/routedetails?routeid='+value['route_id']+'&seq='+(parseInt(value['seq'])-1)); }}>
 
                                         <div style={{margin:'2px', marginTop:'0px', height:'66px', backgroundColor:'white', display:'flex', borderRadius:'4px', border: '1px solid #e2e2e2', overflow:'hidden', flexDirection:'row'}} >
 
                                             <div style={{width:'20%', fontSize:'18px'}}>
-                                                <div style={{lineHeight:'30px', marginTop:'10px'}}>{item['route']}</div>
+                                                <div style={{lineHeight:'30px', marginTop:'10px'}}>{value['route']}</div>
                                                 <div style={{lineHeight:'15px', fontSize:'11px'}}>
-                                                    {item['company'] == 'ctb' ? <div style={{backgroundImage: 'linear-gradient(to right, #fff25c, #fffac2)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{ctb[lang]}</div> : ''}
-                                                    {item['company'] == 'kmb' ? <div style={{backgroundImage: 'linear-gradient(to right, #fdaaaa, #fde0e0)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{kmb[lang]}</div> : ''}
-                                                    {item['company'] == 'kmbctb' ? <div style={{backgroundImage: 'linear-gradient(to right, #f4c1c1 50%, #fff68f 50%)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{kmbctb[lang]}</div> : ''}
+                                                    {value['company'] == 'ctb' ? <div style={{backgroundImage: 'linear-gradient(to right, #fff25c, #fffac2)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{ctb[lang]}</div> : ''}
+                                                    {value['company'] == 'kmb' ? <div style={{backgroundImage: 'linear-gradient(to right, #fdaaaa, #fde0e0)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{kmb[lang]}</div> : ''}
+                                                    {value['company'] == 'kmbctb' ? <div style={{backgroundImage: 'linear-gradient(to right, #f4c1c1 50%, #fff68f 50%)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{kmbctb[lang]}</div> : ''}
                                                 </div>
                                             </div>
 
-                                            <div style={{width:'60%', lineHeight:'30px', textAlign:'left', margin:'4px'}}>
-                                                <div style={{display:'flex', flexDirection:'row', height:'50%'}}>
+                                            <div style={{width:'80%', lineHeight:'60px', textAlign:'left', margin:'4px'}}>
+                                                <div style={{display:'flex', flexDirection:'row', height:'100%'}}>
                                                     <div style={{fontSize:'11px', marginTop: '3px'}}>{to[lang]}&nbsp;</div>
-                                                    <div style={{fontSize:'17px', overflow:'hidden', wordBreak:'break-all'}}>{item['dest_tc']}</div>
-                                                </div>
-                                                <div style={{height:'50%', fontSize:'17px'}}>{item['name_tc']}</div>
-                                            </div>
-                                            <div style={{width:'20%', lineHeight:'20px'}}>
-                                                <div style={{display:'flex', flexDirection:'row', height:'33%'}}>
-                                                    <div style={{width:'50%', textAlign:'right'}}>{item['eta1']}&nbsp;</div>
-                                                    <div style={{width:'50%', textAlign:'left', fontSize:'11px', marginTop: 'auto'}}>{minute[lang]}</div>
-                                                </div>
-                                                <div style={{display:'flex', flexDirection:'row', height:'33%'}}>
-                                                    <div style={{width:'50%', textAlign:'right'}}>{item['eta2']}&nbsp;</div>
-                                                    <div style={{width:'50%', textAlign:'left', fontSize:'11px', marginTop: 'auto'}}>{minute[lang]}</div>
-                                                </div>
-                                                <div style={{display:'flex', flexDirection:'row', height:'33%'}}>
-                                                    <div style={{width:'50%', textAlign:'right'}}>{item['eta3']}&nbsp;</div>
-                                                    <div style={{width:'50%', textAlign:'left', fontSize:'11px', marginTop: 'auto'}}>{minute[lang]}</div>
+                                                    <div style={{fontSize:'17px', overflow:'hidden', wordBreak:'break-all'}}>{value['dest_tc']}</div>
                                                 </div>
                                             </div>
-                                            
                                         </div>
                                     </div>
                                 </Fade>
@@ -519,8 +239,6 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
                                                 <Button variant="warning" size='lg' className={styles.numPadButton} onClick={() => setShowKeyboard(!showKeyboard)}><Icon.ChevronDown style={{padding:'0px !important',margin:'0px !important'}}/></Button>
                                                 <Button variant="danger" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('backspace')}><Icon.Backspace/></Button>
                                                 <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('0')}>0</Button>
-                                                <Button variant="primary" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('/')}>/</Button>
-                                                <Button variant="success" size='lg' className={styles.numPadButton} onClick={() => {setTriggerSearch(true)}}><Icon.Search/></Button>
                                             </div>
                                         </div>
 
@@ -570,4 +288,4 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
     )
 }
 
-export default QuickSearch;
+export default GeneralSearch
