@@ -1,4 +1,5 @@
 const quickSearch = {'tc':'快速搜尋', 'sc':'快速搜尋', 'en':'Quick Search'};
+const generalSearch = {'tc':'一般搜尋', 'sc':'一般搜尋', 'en':'General Search'};
 const enterMultipleRoutes = {'tc':'輸入多條路線，以 / 分隔', 'sc':'輸入多條路線，以 / 分隔', 'en':'Enter Multiple Routes Divide By /'};
 const to = {'tc':'往', 'sc':'往', 'en':'To'};
 const minute = {'tc':'分鐘', 'sc':'分鐘', 'en':'Min'};
@@ -12,5 +13,5 @@ const downloadData = {'tc':'下載資料', 'sc':'下載資料', 'en':'Download D
 const downloadingData = {'tc':'正在下載路線資料', 'sc':'正在下載路線資料', 'en':'Download Route Data In Progress'};
 const downloadComplete = {'tc':'下載完成', 'sc':'下載完成', 'en':'Download Complete'};
 
-export { quickSearch, enterMultipleRoutes, to, minute, pleaseAllowBrowserToAccessLocation, 
+export { quickSearch, generalSearch, enterMultipleRoutes, to, minute, pleaseAllowBrowserToAccessLocation, 
     kmb, ctb, kmbctb, pleaseInputRoutes, unableToDownloadETA, downloadData, downloadingData, downloadComplete }

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import styles from './GeneralSearchStyle.module.css';
 import { Form, Button, Fade } from 'react-bootstrap';
 import { findClosestStop, roundDown } from '../utilities/LocationUtility';
-import { ctb, enterMultipleRoutes, kmb, kmbctb, minute, pleaseInputRoutes, quickSearch, to, unableToDownloadETA } from '../utilities/Locale';
+import { ctb, enterMultipleRoutes, generalSearch, kmb, kmbctb, minute, pleaseInputRoutes, quickSearch, to, unableToDownloadETA } from '../utilities/Locale';
 import { extractCtbEta, extractKmbEta, sortCoopEta, downloadJson } from '../utilities/JsonHandler';
 import AppBar from '../ui_components/AppBar';
 import SpinnerFullscreen from '../ui_components/SpinnerFullscreen';
@@ -17,29 +17,33 @@ const GeneralSearch = ({locationMain, setStartGettingLocation}) => {
     var backBtn = <Icon.ArrowLeft onClick={() => navigate('/', { replace: true })} style={{width:'50px', height:'50px', padding:'10px'}} />;
     const navigate = useNavigate();
     const urlParams = new URLSearchParams(window.location.search);
-    const[lang, setLang] = useState('tc');
+    const [lang, setLang] = useState('tc');
 
-    const[showKeyboard, setShowKeyboard] = useState(true);
-    const[showLoading, setShowLoading] = useState(false);
-    const[showContent, setShowContent] = useState(false);
+    const [showKeyboard, setShowKeyboard] = useState(true);
+    const [showLoading, setShowLoading] = useState(false);
+    const [showContent, setShowContent] = useState(false);
 
-    const[toastText, setToastText] = useState('');
-    const[toastTrigger,setToastTrigger] = useState(0);
+    const [toastText, setToastText] = useState('');
+    const [toastTrigger,setToastTrigger] = useState(0);
 
-    const[routeStopList, setRouteStopList] = useState({});
-    const[routeList, setRotueList] = useState({});
+    const [routeList, setRotueList] = useState({});
+    const [displayList, setDisplayList] = useState([]);
+    const [inputRoutes, setInputRoutes] = useState('');
 
-    const[inputRoutes, setInputRoutes] = useState('');
-    const[suggestList, setSuggestList] = useState([]);
-
+    const [triggerSearch, setTriggerSearch] = useState(0);
 
     useEffect(() => {
         initialize();
     }, [])
 
+    useEffect(() => {
+        searchRoute();
+    }, [triggerSearch])
+
     async function initialize()
     {
         setStartGettingLocation(true);
+        setShowLoading(true);
 
         var routeListData = await getStorageItemDB('routeList');
         if (Object.keys(routeListData).length == 0)
@@ -48,18 +52,60 @@ const GeneralSearch = ({locationMain, setStartGettingLocation}) => {
         }   
         else
         {
-            setRotueList(routeListData);
+            var newRouteListData = {};
+
+            for (const key in routeListData)
+            {
+                const theKey = routeListData[key]['route'].substring(0, 1);
+
+                if (theKey in newRouteListData)
+                {
+                    newRouteListData[theKey].push(routeListData[key]);
+                }
+                else
+                {
+                    var newArr = [routeListData[key]];
+                    newRouteListData[theKey] = newArr;
+                }
+            }
+
+            setRotueList(newRouteListData);
         }
 
-        console.log(routeListData);
-        // if (urlParams.has('query'))
-        // {
-        //     var newInputRoutes = urlParams.get('query');
-        //     setInputRoutes(newInputRoutes); 
-        //     setTriggerSearch(true);
-        // }
+        if (urlParams.has('query'))
+        {
+            var newInputRoutes = urlParams.get('query');
+            setInputRoutes(newInputRoutes); 
+            setTriggerSearch(true);
+        }
         
+        setShowLoading(false);
         setShowContent(true); 
+    }
+
+    async function searchRoute()
+    {
+        var newDisplayList = [];
+        const inputLength = inputRoutes.toString().length;
+        const theKey = inputRoutes.substring(0, 1);
+
+        if (inputLength > 0)
+        {
+            if (theKey in routeList)
+            {
+                const searchTarger = routeList[theKey];
+
+                for (var i=0 ; i<searchTarger.length ; i++)
+                {
+                    if (searchTarger[i]['route'].substring(0, inputLength) == inputRoutes)
+                    {
+                        newDisplayList.push(searchTarger[i]);
+                    }
+                }
+            }
+        }
+
+        setDisplayList(newDisplayList);
     }
 
     async function onChangeInputRoutes(letter){
@@ -74,72 +120,23 @@ const GeneralSearch = ({locationMain, setStartGettingLocation}) => {
         else if (letter == 'clear')
         {
             newInput = '';
-            navigate('', { replace: true });
-        }
-        else if (letter == '/')
-        {
-            if (currInput != '' && currInput.charAt(currInput.length-1) != '/')
-                newInput = currInput + '/';
-            else
-                newInput = currInput;
         }
         else
         {
             newInput = currInput + letter;
         }
         
-
-        if (newInput != '')
+        if (newInput == '')
         {
-            var existInputArray = newInput.split('/');
-            var existInputMap = {};
-            
-
-            if (existInputArray.length >= 2)
-            {
-                for (var i=0 ; i<existInputArray.length-1 ; i++)
-                {
-                    existInputMap[existInputArray[i]] = existInputArray[i];
-                }
-            }
-            
-            if (existInputArray.length > 0)
-            {
-                var lastInput = existInputArray[existInputArray.length-1];
-                if (lastInput != '')
-                {
-                    setSuggestList([]);
-                    var newSuggestList = [];
-                    for (const key in routeList)
-                    {
-                        const currRoute = key;
-                        if (currRoute in existInputMap == false)
-                        {
-                            if (currRoute.substring(0, lastInput.length) == lastInput)
-                                newSuggestList.push(currRoute);
-                        }
-                    }
-                    
-                    await new Promise(resolve => setTimeout(resolve, 10));
-                    setSuggestList(newSuggestList);
-
-                    if (newSuggestList.length == 1)
-                    {
-                        if (newSuggestList[0] == lastInput && letter != 'backspace')
-                            newInput += '/';
-                    }
-                }
-            }
+            navigate('', { replace: true });
         }
         else
         {
-            setSuggestList([]);
+            navigate(`?query=${newInput}`, { replace: true });
         }
 
-        if (newInput.charAt(newInput.length - 1) == '/')
-            setSuggestList([]);
-
         setInputRoutes(newInput);
+        setTriggerSearch(prev => prev+1);
     }
 
     return (
@@ -154,7 +151,7 @@ const GeneralSearch = ({locationMain, setStartGettingLocation}) => {
             <div style={{height:'100vh'}}>
 
                 {/* ===== APP BAR ===== */}
-                <AppBar leftIcon={backBtn} Header={quickSearch[lang]} rightIcon={''}></AppBar>
+                <AppBar leftIcon={backBtn} Header={generalSearch[lang]} rightIcon={''}></AppBar>
 
                 
                 <Fade in={showContent} appear={true} style={{transitionDuration: '0.3s'}}>
@@ -173,29 +170,32 @@ const GeneralSearch = ({locationMain, setStartGettingLocation}) => {
                         <div style={ showKeyboard ? 
                             {height:'calc(100dvh - 50px - 60px - 248px)', padding:'5px', overflowY:'hidden', display:'block', 
                             flexDirection:'row', justifyContent:'flex-start', flexWrap:'wrap', overflow: 'auto', scrollbarWidth: 'none',} :
-                            {height:'calc(100dvh - 60px - 60px)', padding:'5px', overflowY:'hidden', display:'block', 
+                            {height:'calc(100dvh - 50px - 60px)', padding:'5px', overflowY:'hidden', display:'block', 
                             flexDirection:'row', justifyContent:'flex-start', flexWrap:'wrap', overflow: 'auto', scrollbarWidth: 'none',} 
                         }>
 
-                            {Object.keys(routeList).length > 0 && Object.entries(routeList).map(([key, value]) => (
-                                <Fade in={true} appear={true} key={key}>
-                                    <div style={{height:'74px', width:'100%', display:'block', textAlign:'center'}} onClick={() => { navigate('/routedetails?routeid='+value['route_id']+'&seq='+(parseInt(value['seq'])-1)); }}>
+                            {displayList.length > 0 && displayList.map((item, index) => (
+                                <Fade in={true} appear={true} key={index}>
+                                    <div style={{height:'64px', width:'100%', display:'block', textAlign:'center'}} onClick={() => { navigate('/routedetails?routeid='+item['route_id']); }}>
 
-                                        <div style={{margin:'2px', marginTop:'0px', height:'66px', backgroundColor:'white', display:'flex', borderRadius:'4px', border: '1px solid #e2e2e2', overflow:'hidden', flexDirection:'row'}} >
+                                        <div style={{margin:'2px', marginTop:'0px', height:'56px', backgroundColor:'white', display:'flex', borderRadius:'4px', border: '1px solid #e2e2e2', overflow:'hidden', flexDirection:'row'}} >
 
-                                            <div style={{width:'20%', fontSize:'18px'}}>
-                                                <div style={{lineHeight:'30px', marginTop:'10px'}}>{value['route']}</div>
-                                                <div style={{lineHeight:'15px', fontSize:'11px'}}>
-                                                    {value['company'] == 'ctb' ? <div style={{backgroundImage: 'linear-gradient(to right, #fff25c, #fffac2)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{ctb[lang]}</div> : ''}
-                                                    {value['company'] == 'kmb' ? <div style={{backgroundImage: 'linear-gradient(to right, #fdaaaa, #fde0e0)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{kmb[lang]}</div> : ''}
-                                                    {value['company'] == 'kmbctb' ? <div style={{backgroundImage: 'linear-gradient(to right, #f4c1c1 50%, #fff68f 50%)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{kmbctb[lang]}</div> : ''}
+                                            <div style={{width:'20%', lineHeight:'50px', textAlign:'center', margin:'4px'}}>
+                                                <div style={{fontSize:'18px'}}>{item['route']}</div>
+                                            </div>
+
+                                            <div style={{width:'60%', lineHeight:'50px', textAlign:'left', margin:'4px'}}>
+                                                <div style={{display:'flex', flexDirection:'row', height:'100%'}}>
+                                                    <div style={{fontSize:'11px', marginTop: '3px'}}>{to[lang]}&nbsp;</div>
+                                                    <div style={{fontSize:'17px', overflow:'hidden', wordBreak:'break-all'}}>{item['dest_tc']}</div>
                                                 </div>
                                             </div>
 
-                                            <div style={{width:'80%', lineHeight:'60px', textAlign:'left', margin:'4px'}}>
-                                                <div style={{display:'flex', flexDirection:'row', height:'100%'}}>
-                                                    <div style={{fontSize:'11px', marginTop: '3px'}}>{to[lang]}&nbsp;</div>
-                                                    <div style={{fontSize:'17px', overflow:'hidden', wordBreak:'break-all'}}>{value['dest_tc']}</div>
+                                            <div style={{width:'20%', lineHeight:'50px', textAlign:'center', margin:'4px',  display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                                                <div style={{lineHeight:'15px', fontSize:'11px', width:'100%'}}>
+                                                    {item['company'] == 'ctb' ? <div style={{backgroundImage: 'linear-gradient(to right, #fff25c, #fffac2)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{ctb[lang]}</div> : ''}
+                                                    {item['company'] == 'kmb' ? <div style={{backgroundImage: 'linear-gradient(to right, #fdaaaa, #fde0e0)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{kmb[lang]}</div> : ''}
+                                                    {item['company'] == 'kmbctb' ? <div style={{backgroundImage: 'linear-gradient(to right, #f4c1c1 50%, #fff68f 50%)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{kmbctb[lang]}</div> : ''}
                                                 </div>
                                             </div>
                                         </div>

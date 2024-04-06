@@ -34,10 +34,10 @@ const HomePage = () => {
                             </div>
                         </Button>
 
-                        <Button variant="light" size='lg' style={{width:'40%', height:'150px', marginLeft:'7.5%'}}>
+                        <Button variant="light" size='lg' style={{width:'40%', height:'150px', marginLeft:'7.5%'}} onClick={() => navigate('/generalsearch')}>
                             <div >
                                 <ReactIcon.Search style={{width:'70px', height:'70px', marginBottom:'10px'}}/>
-                                <div>一般搜尋(準備中)</div>
+                                <div>一般搜尋</div>
                             </div>
                         </Button>
                     </div>

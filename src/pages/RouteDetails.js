@@ -33,7 +33,7 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
     const[stopMarkers, setStopMarkers] = useState(null);
     const[mapLocation, setMapLocation] = useState([22.324681505, 114.176558367]);
     const[mapFullscreen, setMapFullscreen] = useState(false);
-    const[selectedIndex, setSelectedIndex] = useState(0);
+    const[selectedIndex, setSelectedIndex] = useState(1000);
 
     const[triggerShowMarkerLabel, setTriggerShowMarkerLabel] = useState(false);
     const[triggerScrollToIndex, setTriggerScrollToIndex] = useState(false);

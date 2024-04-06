@@ -28,29 +28,31 @@ const DownloadData = () => {
     }, [])
 
     async function initialize() {
+        const timestamp = new Date().getTime();
+
         setDownloadedItem(1);
-        const uniqueroutelistData = await downloadJson('https://webappdev.info:8081/uniqueroutelist');
+        const uniqueroutelistData = await downloadJson(`https://webappdev.info:8081/uniqueroutelist?timestamp=${timestamp}`);
         await setStorageItemDB('uniqueRouteList', uniqueroutelistData);
         setProgress(0);
         await new Promise(resolve => setTimeout(resolve, 500));
 
         setDownloadedItem(2);
-        var kmbroutestoplistData = await downloadJson('https://webappdev.info:8081/kmbroutestoplist');
+        var kmbroutestoplistData = await downloadJson(`https://webappdev.info:8081/kmbroutestoplist?timestamp=${timestamp}`);
         setProgress(0);
         await new Promise(resolve => setTimeout(resolve, 500));
 
         setDownloadedItem(3);
-        var ctbroutestoplistData = await downloadJson('https://webappdev.info:8081/ctbroutestoplist');
+        var ctbroutestoplistData = await downloadJson(`https://webappdev.info:8081/ctbroutestoplist?timestamp=${timestamp}`);
         var routeStopListData = {...kmbroutestoplistData, ...ctbroutestoplistData};
         await setStorageItemDB('routeStopList', routeStopListData);
 
         setDownloadedItem(4);
-        var kmboutelistData = await downloadJson('https://webappdev.info:8081/kmbroutelist');
+        var kmboutelistData = await downloadJson(`https://webappdev.info:8081/kmbroutelist?timestamp=${timestamp}`);
         setProgress(0);
         await new Promise(resolve => setTimeout(resolve, 500));
 
         setDownloadedItem(5);
-        var ctbroutelistData = await downloadJson('https://webappdev.info:8081/ctbroutelist');
+        var ctbroutelistData = await downloadJson(`https://webappdev.info:8081/ctbroutelist?timestamp=${timestamp}`);
         setProgress(0);
         await new Promise(resolve => setTimeout(resolve, 500));
         var routeListData = {...kmboutelistData, ...ctbroutelistData};
@@ -65,6 +67,10 @@ const DownloadData = () => {
         {
             const prevPage = urlParams.get('prevpage');
             if (prevPage == 'quicksearch')
+            {
+                navigate(`/${prevPage}`, {replace: true});
+            }
+            if (prevPage == 'generalsearch')
             {
                 navigate(`/${prevPage}`, {replace: true});
             }
