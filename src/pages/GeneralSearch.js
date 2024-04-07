@@ -48,7 +48,7 @@ const GeneralSearch = ({locationMain, setStartGettingLocation}) => {
         var routeListData = await getStorageItemDB('routeList');
         if (Object.keys(routeListData).length == 0)
         {
-            navigate('/downloaddata?prevpage=generalsearch', { replace: true });
+            navigate('/downloaddata?autodownload=yes&prevpage=generalsearch', { replace: true });
         }   
         else
         {

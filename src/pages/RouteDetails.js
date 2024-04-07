@@ -97,7 +97,7 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
         var routeStopListData = await getStorageItemDB('routeStopList');
         if (Object.keys(routeStopListData).length == 0)
         {
-            navigate(`/downloaddata?prevpage=routedetails&routeid=${routeid}&seq=${seq}`, { replace: true });
+            navigate(`/downloaddata?autodownload=yes&prevpage=routedetails&routeid=${routeid}&seq=${seq}`, { replace: true });
         }   
 
         if (routeid in routeStopListData)

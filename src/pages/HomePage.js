@@ -27,17 +27,24 @@ const HomePage = () => {
                     </div>
 
                     <div style={{height:'200px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                        <Button variant="light" size='lg' style={{width:'40%', height:'150px'}} onClick={() => navigate('/quicksearch')}>
+                        <Button variant="light" size='lg' style={{width:'26%', height:'120px'}} onClick={() => navigate('/quicksearch')}>
                             <div >
-                                <ReactIcon.Magic style={{width:'70px', height:'70px', marginBottom:'10px', marginRight:'7.5%'}}/>
+                                <ReactIcon.Magic style={{width:'55px', height:'55px', marginBottom:'10px', marginRight:'7.5%'}}/>
                                 <div>快速搜尋</div>
                             </div>
                         </Button>
 
-                        <Button variant="light" size='lg' style={{width:'40%', height:'150px', marginLeft:'7.5%'}} onClick={() => navigate('/generalsearch')}>
+                        <Button variant="light" size='lg' style={{width:'26%', height:'120px', marginLeft:'7.5%'}} onClick={() => navigate('/generalsearch')}>
                             <div >
-                                <ReactIcon.Search style={{width:'70px', height:'70px', marginBottom:'10px'}}/>
+                                <ReactIcon.Search style={{width:'55px', height:'55px', marginBottom:'10px'}}/>
                                 <div>一般搜尋</div>
+                            </div>
+                        </Button>
+
+                        <Button variant="light" size='lg' style={{width:'26%', height:'120px', marginLeft:'7.5%'}} onClick={() => navigate('/downloaddata')}>
+                            <div >
+                                <ReactIcon.Download style={{width:'55px', height:'55px', marginBottom:'10px'}}/>
+                                <div>下載資料</div>
                             </div>
                         </Button>
                     </div>

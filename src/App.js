@@ -47,7 +47,7 @@ function App() {
     }, [startGettingLocation]);
 
     return (
-        <BrowserRouter basename="/checketatest">
+        <BrowserRouter basename="/checketa">
             <Routes>
                 <Route exact path="/" element={<HomePage />}></Route>
                 <Route exact path='/quickSearch' element={<QuickSearch locationMain={location} setStartGettingLocation={setStartGettingLocation}/>}> </Route>

@@ -12,6 +12,9 @@ const unableToDownloadETA = {'tc':'未能下載到站預報', 'sc':'未能下載
 const downloadData = {'tc':'下載資料', 'sc':'下載資料', 'en':'Download Data'};
 const downloadingData = {'tc':'正在下載路線資料', 'sc':'正在下載路線資料', 'en':'Download Route Data In Progress'};
 const downloadComplete = {'tc':'下載完成', 'sc':'下載完成', 'en':'Download Complete'};
+const deviceVersionText = {'tc':'現有資料版本', 'sc':'現有資料版本', 'en':'Device Version'};
+const serverVersionText = {'tc':'最新版本', 'sc':'最新版本', 'en':'Latest Version'};
 
 export { quickSearch, generalSearch, enterMultipleRoutes, to, minute, pleaseAllowBrowserToAccessLocation, 
-    kmb, ctb, kmbctb, pleaseInputRoutes, unableToDownloadETA, downloadData, downloadingData, downloadComplete }
+    kmb, ctb, kmbctb, pleaseInputRoutes, unableToDownloadETA, downloadData, downloadingData, downloadComplete,
+    deviceVersionText, serverVersionText }

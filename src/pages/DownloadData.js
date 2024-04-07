@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { downloadJson } from "../utilities/JsonHandler";
-import { setStorageItemDB } from "../utilities/LocalStorage";
+import { getStorageItemDB, setStorageItemDB } from "../utilities/LocalStorage";
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import styles from './DownloadDataStyle.module.css';
@@ -8,7 +8,7 @@ import ToastAlert from "../ui_components/ToastAlert";
 import AppBar from "../ui_components/AppBar";
 import { Form, Button, Fade } from 'react-bootstrap';
 import * as Icon from 'react-bootstrap-icons';
-import { downloadComplete, downloadData, downloadingData } from "../utilities/Locale";
+import { deviceVersionText, downloadComplete, downloadData, downloadingData, serverVersionText } from "../utilities/Locale";
 import ProgressBar from 'react-bootstrap/ProgressBar';
 
 const DownloadData = () => {
@@ -16,6 +16,9 @@ const DownloadData = () => {
     const navigate = useNavigate();
     var backBtn = <Icon.ArrowLeft onClick={() => navigate('/', { replace: true })} style={{width:'50px', height:'50px', padding:'10px'}} />;
     const[lang, setLang] = useState('tc');
+    const[deviceVersion, setDeviceVersion] = useState('不適用');
+    const[serverVersion, setServerVersion] = useState('');
+    const[triggerDownload, setTriggerDownload] = useState(false);
     const[downloadedItem, setDownloadedItem] = useState(0);
     const[progress, setProgress] = useState(0);
     const[mainText, setMainText] = useState(downloadingData[lang]);
@@ -23,12 +26,49 @@ const DownloadData = () => {
     const[toastText, setToastText] = useState('');
     const[toastTrigger,setToastTrigger] = useState(0);
 
-    useEffect(() => {
-        initialize()
-    }, [])
+    const[showDownloadProgress, setShowDownloadProgress] = useState(false);
 
-    async function initialize() {
+    useEffect(() => {
+        initialize();
+    },[])
+
+    useEffect(() => {
+        if (triggerDownload)
+        {
+            download();
+            setTriggerDownload(false);
+        }
+    }, [triggerDownload])
+
+    async function initialize()
+    {
         const timestamp = new Date().getTime();
+
+        const newDeviceVersion = await getStorageItemDB('version');
+        console.log(newDeviceVersion);
+        if ('dateString' in newDeviceVersion)
+            setDeviceVersion(newDeviceVersion['dateString']);
+
+        const newServerVersion = await downloadJson(`https://webappdev.info:8081/getlatestversion?timestamp=${timestamp}`);
+        if ('dateString' in newServerVersion)
+            setServerVersion(newServerVersion['dateString']);    
+
+        if (urlParams.has('autodownload'))
+        {
+            const autodownload = urlParams.get('autodownload');
+            if (autodownload == 'yes')
+            {
+                setTriggerDownload(true);
+                setShowDownloadProgress(true);
+            }    
+        }
+    }
+
+    async function download() {
+        const timestamp = new Date().getTime();
+
+        const newVersion = await downloadJson(`https://webappdev.info:8081/getlatestversion?timestamp=${timestamp}`);
+        await setStorageItemDB('version', newVersion);
 
         setDownloadedItem(1);
         const uniqueroutelistData = await downloadJson(`https://webappdev.info:8081/uniqueroutelist?timestamp=${timestamp}`);
@@ -43,19 +83,29 @@ const DownloadData = () => {
 
         setDownloadedItem(3);
         var ctbroutestoplistData = await downloadJson(`https://webappdev.info:8081/ctbroutestoplist?timestamp=${timestamp}`);
-        var routeStopListData = {...kmbroutestoplistData, ...ctbroutestoplistData};
-        await setStorageItemDB('routeStopList', routeStopListData);
+        setProgress(0);
+        await new Promise(resolve => setTimeout(resolve, 500));
 
         setDownloadedItem(4);
+        var mtrbusroutestoplistData = await downloadJson(`https://webappdev.info:8081/mtrbusroutestoplist?timestamp=${timestamp}`);
+        var routeStopListData = {...kmbroutestoplistData, ...ctbroutestoplistData, ...mtrbusroutestoplistData};
+        await setStorageItemDB('routeStopList', routeStopListData);
+
+        setDownloadedItem(5);
         var kmboutelistData = await downloadJson(`https://webappdev.info:8081/kmbroutelist?timestamp=${timestamp}`);
         setProgress(0);
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        setDownloadedItem(5);
+        setDownloadedItem(6);
         var ctbroutelistData = await downloadJson(`https://webappdev.info:8081/ctbroutelist?timestamp=${timestamp}`);
         setProgress(0);
         await new Promise(resolve => setTimeout(resolve, 500));
-        var routeListData = {...kmboutelistData, ...ctbroutelistData};
+
+        setDownloadedItem(7);
+        var mtrbusroutelistData = await downloadJson(`https://webappdev.info:8081/mtrbusroutelist?timestamp=${timestamp}`);
+        setProgress(100);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        var routeListData = {...kmboutelistData, ...ctbroutelistData, ...mtrbusroutelistData};
         await setStorageItemDB('routeList', routeListData);
 
         setMainText(downloadComplete[lang]);
@@ -119,12 +169,23 @@ const DownloadData = () => {
                     <div style={{height:'100dvh'}}>
                         <div style={{ height: 'calc(100dvh - 50px)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', fontSize: '18px', textAlign: 'center' }}>
                             <div><Icon.Download style={{ width:'70px', height:'70px', padding: '0px'}} /></div>
+                            <div style={{marginTop:'20px'}}>{deviceVersionText[lang]}: {deviceVersion}</div>
+                            <div>{serverVersionText[lang]}: {serverVersion}</div>
 
-                            <div style={{marginTop:'40px'}}>{mainText}</div>
+                            {showDownloadProgress == false ? 
+                            <div style={{marginTop:'40px', width:'50%'}}>
+                                <Button variant="success" style={{marginTop:'20px'}}
+                                    onClick={() => {setTriggerDownload(true); setShowDownloadProgress(true)}}
+                                >{downloadData[lang]}</Button>
+                            </div> : ''}
 
-                            <div>{downloadedItem}/5</div>
-
-                            <ProgressBar variant="success" now={progress} style={{width:'50%'}} /> 
+                            {showDownloadProgress == true ?
+                            <div style={{marginTop:'40px', width:'50%'}}>
+                                <div >{mainText}</div>
+                                <div>{downloadedItem}/5</div>
+                                <ProgressBar variant="success" now={progress} style={{width:'100%'}} />
+                            </div> : ''}
+    
                         </div>
                     </div>
                 </Fade>

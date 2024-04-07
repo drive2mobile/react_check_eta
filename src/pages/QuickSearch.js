@@ -15,6 +15,7 @@ import { now } from 'moment';
 
 const QuickSearch = ({locationMain, setStartGettingLocation}) => {
     var backBtn = <Icon.ArrowLeft onClick={() => navigate('/', { replace: true })} style={{width:'50px', height:'50px', padding:'10px'}} />;
+    var shareBtn = <Icon.ShareFill onClick={() => shareLink() } style={{width:'50px', height:'50px', padding:'13px'}} />;
     const navigate = useNavigate();
     const urlParams = new URLSearchParams(window.location.search);
     const[lang, setLang] = useState('tc');
@@ -105,7 +106,7 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
         var routeStopListData = await getStorageItemDB('routeStopList');
         if (Object.keys(uniqueRouteList).length == 0 || Object.keys(routeStopListData).length == 0)
         {
-            navigate('/downloaddata?prevpage=quicksearch', { replace: true });
+            navigate('/downloaddata?autodownload=yes&prevpage=quicksearch', { replace: true });
         }   
         else
         {
@@ -293,6 +294,25 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
         }
     }
 
+    async function shareLink()
+    {
+        if (navigator.share) {
+            try {
+              await navigator.share({
+                title: 'Share Current Address',
+                url: window.location.href
+              });
+              console.log('Link shared successfully!');
+            } catch (error) {
+              console.error('Error sharing link:', error);
+            }
+          } else {
+            console.log('Web Share API not supported.');
+            // Fallback behavior when Web Share API is not supported
+            // You can implement alternative sharing methods or UI here
+          }
+    }
+
     async function onChangeInputRoutes(letter){
         setTriggerAutoDownload(false);
         setEtaList([]);
@@ -402,7 +422,7 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
             <div style={{height:'100vh'}}>
 
                 {/* ===== APP BAR ===== */}
-                <AppBar leftIcon={backBtn} Header={quickSearch[lang]} rightIcon={''}></AppBar>
+                <AppBar leftIcon={backBtn} Header={quickSearch[lang]} rightIcon={shareBtn}></AppBar>
 
                 
                 <Fade in={showContent} appear={true} style={{transitionDuration: '0.3s'}}>
