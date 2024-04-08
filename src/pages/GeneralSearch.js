@@ -54,17 +54,17 @@ const GeneralSearch = ({locationMain, setStartGettingLocation}) => {
         {
             var newRouteListData = {};
 
-            for (const key in routeListData)
+            for (var i=0 ; i<routeListData.length ; i++)
             {
-                const theKey = routeListData[key]['route'].substring(0, 1);
+                const theKey = routeListData[i]['route'].substring(0, 1);
 
                 if (theKey in newRouteListData)
                 {
-                    newRouteListData[theKey].push(routeListData[key]);
+                    newRouteListData[theKey].push(routeListData[i]);
                 }
                 else
                 {
-                    var newArr = [routeListData[key]];
+                    var newArr = [routeListData[i]];
                     newRouteListData[theKey] = newArr;
                 }
             }

@@ -29,7 +29,7 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
     const[toastTrigger,setToastTrigger] = useState(0);
 
     const[routeStopList, setRouteStopList] = useState({});
-    const[routeList, setRotueList] = useState({});
+    const[routeList, setRotueList] = useState([]);
 
     const[inputRoutes, setInputRoutes] = useState('');
     const[suggestList, setSuggestList] = useState([]);
@@ -375,9 +375,9 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
                 {
                     setSuggestList([]);
                     var newSuggestList = [];
-                    for (const key in routeList)
+                    for (var i=0 ; i<routeList.length ; i++)
                     {
-                        const currRoute = key;
+                        const currRoute = routeList[i];
                         if (currRoute in existInputMap == false)
                         {
                             if (currRoute.substring(0, lastInput.length) == lastInput)

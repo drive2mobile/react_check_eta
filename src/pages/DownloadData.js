@@ -77,36 +77,16 @@ const DownloadData = () => {
         await new Promise(resolve => setTimeout(resolve, 500));
 
         setDownloadedItem(2);
-        var kmbroutestoplistData = await downloadJson(`https://webappdev.info:8081/kmbroutestoplist?timestamp=${timestamp}`);
+        var routeStopListData = await downloadJson(`https://webappdev.info:8081/routestoplist?timestamp=${timestamp}`);
+        await setStorageItemDB('routeStopList', routeStopListData);
         setProgress(0);
         await new Promise(resolve => setTimeout(resolve, 500));
 
         setDownloadedItem(3);
-        var ctbroutestoplistData = await downloadJson(`https://webappdev.info:8081/ctbroutestoplist?timestamp=${timestamp}`);
-        setProgress(0);
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        setDownloadedItem(4);
-        var mtrbusroutestoplistData = await downloadJson(`https://webappdev.info:8081/mtrbusroutestoplist?timestamp=${timestamp}`);
-        var routeStopListData = {...kmbroutestoplistData, ...ctbroutestoplistData, ...mtrbusroutestoplistData};
-        await setStorageItemDB('routeStopList', routeStopListData);
-
-        setDownloadedItem(5);
-        var kmboutelistData = await downloadJson(`https://webappdev.info:8081/kmbroutelist?timestamp=${timestamp}`);
-        setProgress(0);
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        setDownloadedItem(6);
-        var ctbroutelistData = await downloadJson(`https://webappdev.info:8081/ctbroutelist?timestamp=${timestamp}`);
-        setProgress(0);
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        setDownloadedItem(7);
-        var mtrbusroutelistData = await downloadJson(`https://webappdev.info:8081/mtrbusroutelist?timestamp=${timestamp}`);
+        var routeListData = await downloadJson(`https://webappdev.info:8081/routelist?timestamp=${timestamp}`);
+        await setStorageItemDB('routeList', routeListData);
         setProgress(100);
         await new Promise(resolve => setTimeout(resolve, 500));
-        var routeListData = {...kmboutelistData, ...ctbroutelistData, ...mtrbusroutelistData};
-        await setStorageItemDB('routeList', routeListData);
 
         setMainText(downloadComplete[lang]);
         setToastText(downloadComplete[lang]);
@@ -182,7 +162,7 @@ const DownloadData = () => {
                             {showDownloadProgress == true ?
                             <div style={{marginTop:'40px', width:'50%'}}>
                                 <div >{mainText}</div>
-                                <div>{downloadedItem}/5</div>
+                                <div>{downloadedItem}/3</div>
                                 <ProgressBar variant="success" now={progress} style={{width:'100%'}} />
                             </div> : ''}
     
