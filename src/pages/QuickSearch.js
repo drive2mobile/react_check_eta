@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Form, Button, Fade } from 'react-bootstrap';
 import { findClosestStop, roundDown } from '../utilities/LocationUtility';
-import { ctb, enterMultipleRoutes, kmb, kmbctb, minute, pleaseInputRoutes, quickSearch, to, unableToDownloadETA } from '../utilities/Locale';
-import { extractCtbEta, extractKmbEta, sortCoopEta, downloadJson } from '../utilities/JsonHandler';
+import { ctb, enterMultipleRoutes, kmb, kmbctb, minute, mtrbus, pleaseInputRoutes, quickSearch, to, unableToDownloadETA } from '../utilities/Locale';
+import { extractCtbEta, extractKmbEta, sortCoopEta, extractMtrbusEta, downloadJson } from '../utilities/JsonHandler';
 import { useNavigate } from 'react-router-dom';
 import AppBar from '../ui_components/AppBar';
-import styles from './QuickSearchStyle.module.css';
+import styles from './styles/QuickSearchStyle.module.css';
 import SpinnerFullscreen from '../ui_components/SpinnerFullscreen';
 import ToastAlert from '../ui_components/ToastAlert';
 import axios from 'axios';
@@ -162,7 +162,8 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
                 {
                     var currRouteIdArray = ['kmb' + inputRoutesArray[i] + '_I1','kmb' + inputRoutesArray[i] + '_O1',
                                             'ctb' + inputRoutesArray[i] + '_I1','ctb' + inputRoutesArray[i] + '_O1',
-                                            'kmbctb' + inputRoutesArray[i] + '_I1','kmbctb' + inputRoutesArray[i] + '_O1',];
+                                            'kmbctb' + inputRoutesArray[i] + '_I1','kmbctb' + inputRoutesArray[i] + '_O1',
+                                            'mtrbus' + inputRoutesArray[i] + '_I1','mtrbus' + inputRoutesArray[i] + '_O1',];
         
                     for (var j=0 ; j<currRouteIdArray.length ; j++)
                     {
@@ -276,6 +277,17 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
                             const combinedArray = [...resultArrayKmb, ...resultArrayCtb];
                             const resultArray = sortCoopEta(combinedArray);
         
+                            etaList[i]['eta1'] = resultArray[0];
+                            etaList[i]['eta2'] = resultArray[1];
+                            etaList[i]['eta3'] = resultArray[2];
+                        }
+                        else if (company == 'mtrbus')
+                        {
+                            const url = `https://rt.data.gov.hk/v1/transport/mtr/bus/getSchedule`;
+                            const body = {"language": "zh", "routeName": currItem['route']};
+                            const response = await axios.post(url, body);
+                            const resultArray = extractMtrbusEta(response.data, etaList[i]['stop']);
+
                             etaList[i]['eta1'] = resultArray[0];
                             etaList[i]['eta2'] = resultArray[1];
                             etaList[i]['eta3'] = resultArray[2];
@@ -473,6 +485,7 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
                                                     {item['company'] == 'ctb' ? <div style={{backgroundImage: 'linear-gradient(to right, #fff25c, #fffac2)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{ctb[lang]}</div> : ''}
                                                     {item['company'] == 'kmb' ? <div style={{backgroundImage: 'linear-gradient(to right, #fdaaaa, #fde0e0)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{kmb[lang]}</div> : ''}
                                                     {item['company'] == 'kmbctb' ? <div style={{backgroundImage: 'linear-gradient(to right, #f4c1c1 50%, #fff68f 50%)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{kmbctb[lang]}</div> : ''}
+                                                    {item['company'] == 'mtrbus' ? <div style={{backgroundImage: 'linear-gradient(to right, #ab060b 50%, #6c4c9f 50%)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px', color:'white'}} >{mtrbus[lang]}</div> : ''}
                                                 </div>
                                             </div>
 

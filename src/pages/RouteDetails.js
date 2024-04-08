@@ -1,6 +1,6 @@
 import { Button, Fade } from "react-bootstrap";
 import OSM from "../ui_components/OSM";
-import styles from './RouteDetailsStyle.module.css';
+import styles from './styles/RouteDetailsStyle.module.css';
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ctb, kmb, kmbctb, minute, quickSearch, to } from "../utilities/Locale";
@@ -8,7 +8,7 @@ import AppBar from "../ui_components/AppBar";
 import ToastAlert from "../ui_components/ToastAlert";
 import SpinnerFullscreen from "../ui_components/SpinnerFullscreen";
 import * as Icon from 'react-bootstrap-icons';
-import { downloadJson, extractCtbEta, extractKmbEta, sortCoopEta } from "../utilities/JsonHandler";
+import { downloadJson, extractCtbEta, extractKmbEta, extractMtrbusEta, sortCoopEta } from "../utilities/JsonHandler";
 import axios from "axios";
 import { getStorageItemDB, setStorageItemDB } from "../utilities/LocalStorage";
 
@@ -158,7 +158,6 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
         {
             try
             {
-                console.log('download');
                 var currItem = stopMarkers[selectedIndex];
                 var company = stopMarkers[selectedIndex]['company'];
 
@@ -193,6 +192,16 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
                     const combinedArray = [...resultArrayKmb, ...resultArrayCtb];
                     const resultArray = sortCoopEta(combinedArray);
 
+                    stopMarkers[selectedIndex]['eta1'] = resultArray[0];
+                    stopMarkers[selectedIndex]['eta2'] = resultArray[1];
+                    stopMarkers[selectedIndex]['eta3'] = resultArray[2];
+                }
+                else if (company == 'mtrbus')
+                {
+                    const url = `https://rt.data.gov.hk/v1/transport/mtr/bus/getSchedule`;
+                    const body = {"language": "zh", "routeName": currItem['route']};
+                    const response = await axios.post(url, body);
+                    const resultArray = extractMtrbusEta(response.data, stopMarkers[selectedIndex]['stop']);
                     stopMarkers[selectedIndex]['eta1'] = resultArray[0];
                     stopMarkers[selectedIndex]['eta2'] = resultArray[1];
                     stopMarkers[selectedIndex]['eta3'] = resultArray[2];

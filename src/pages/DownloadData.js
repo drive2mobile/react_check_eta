@@ -3,7 +3,7 @@ import { downloadJson } from "../utilities/JsonHandler";
 import { getStorageItemDB, setStorageItemDB } from "../utilities/LocalStorage";
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import styles from './DownloadDataStyle.module.css';
+import styles from './styles/DownloadDataStyle.module.css';
 import ToastAlert from "../ui_components/ToastAlert";
 import AppBar from "../ui_components/AppBar";
 import { Form, Button, Fade } from 'react-bootstrap';

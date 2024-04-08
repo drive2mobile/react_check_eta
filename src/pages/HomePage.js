@@ -1,5 +1,5 @@
 import { Button, Fade } from 'react-bootstrap';
-import styles from './HomePageStyle.module.css';
+import styles from './styles/HomePageStyle.module.css';
 import * as ReactIcon from 'react-bootstrap-icons';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';

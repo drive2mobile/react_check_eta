@@ -76,6 +76,35 @@ function extractCtbEta(jsonData, direction)
     return etaArray;
 }
 
+function extractMtrbusEta(jsonData, stop)
+{
+    var dataArray = jsonData['busStop'];
+    var etaArray = ['-', '-', '-'];
+
+    try
+    {
+        for (var i=0 ; i<dataArray.length ; i++)
+        {
+            if (dataArray[i]['busStopId'] == stop)
+            {
+                const busArray = dataArray[i]['bus'];
+                for (var j=0 ; j<busArray.length ; j++)
+                {
+                    var actualEta = parseInt(busArray[j]['departureTimeInSecond']) / 60;
+                    actualEta = Math.round(actualEta);
+    
+                    if (j < 3)
+                        etaArray[j] = actualEta;
+                }
+                break;
+            }
+        }
+    }
+    catch{}
+
+    return etaArray;
+}
+
 function sortCoopEta(etaArray)
 {
     var tempArray = [];
@@ -117,4 +146,4 @@ function calculateCoundDown(timestamp)
     return difference;
 }
 
-export { extractKmbEta, extractCtbEta, sortCoopEta, downloadJson }
+export { extractKmbEta, extractCtbEta, sortCoopEta, downloadJson, extractMtrbusEta }

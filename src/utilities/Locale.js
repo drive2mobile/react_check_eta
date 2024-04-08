@@ -8,6 +8,7 @@ const pleaseInputRoutes = {'tc':'未有輸入搜尋路線', 'sc':'未有輸入�
 const kmb = {'tc':'九巴', 'sc':'九巴', 'en':'KMB'};
 const ctb = {'tc':'城巴', 'sc':'城巴', 'en':'CTB'};
 const kmbctb = {'tc':'九巴/城巴', 'sc':'九巴/城巴', 'en':'KMB/CTB'};
+const mtrbus = {'tc':'港鐵巴士', 'sc':'港鐵巴士', 'en':'MTR Bus'};
 const unableToDownloadETA = {'tc':'未能下載到站預報', 'sc':'未能下載到站預報', 'en':'Unable To Dwonload ETA'};
 const downloadData = {'tc':'下載資料', 'sc':'下載資料', 'en':'Download Data'};
 const downloadingData = {'tc':'正在下載路線資料', 'sc':'正在下載路線資料', 'en':'Download Route Data In Progress'};
@@ -16,5 +17,5 @@ const deviceVersionText = {'tc':'現有資料版本', 'sc':'現有資料版本',
 const serverVersionText = {'tc':'最新版本', 'sc':'最新版本', 'en':'Latest Version'};
 
 export { quickSearch, generalSearch, enterMultipleRoutes, to, minute, pleaseAllowBrowserToAccessLocation, 
-    kmb, ctb, kmbctb, pleaseInputRoutes, unableToDownloadETA, downloadData, downloadingData, downloadComplete,
+    kmb, ctb, kmbctb, mtrbus, pleaseInputRoutes, unableToDownloadETA, downloadData, downloadingData, downloadComplete,
     deviceVersionText, serverVersionText }
