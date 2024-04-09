@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Form, Button, Fade } from 'react-bootstrap';
 import { findClosestStop, roundDown } from '../utilities/LocationUtility';
-import { ctb, enterMultipleRoutes, kmb, kmbctb, minute, mtrbus, pleaseInputRoutes, quickSearch, to, unableToDownloadETA } from '../utilities/Locale';
+import { ctb, enterMultipleRoutes, kmb, kmbctb, minute, mtr, mtrbus, pleaseInputRoutes, quickSearch, to, unableToDownloadETA } from '../utilities/Locale';
 import { extractCtbEta, extractKmbEta, sortCoopEta, extractMtrbusEta, downloadJson } from '../utilities/JsonHandler';
 import { useNavigate } from 'react-router-dom';
 import AppBar from '../ui_components/AppBar';
@@ -12,6 +12,8 @@ import axios from 'axios';
 import * as Icon from 'react-bootstrap-icons';
 import { getStorageItem, getStorageItemDB, setStorageItem, setStorageItemDB } from '../utilities/LocalStorage';
 import { now } from 'moment';
+import { mtrRouteName, mtrRouteNameEn, mtrRouteNameTc } from '../utilities/MtrMetaData';
+import { AutoTextSize } from 'auto-text-size'
 
 const QuickSearch = ({locationMain, setStartGettingLocation}) => {
     var backBtn = <Icon.ArrowLeft onClick={() => navigate('/', { replace: true })} style={{width:'50px', height:'50px', padding:'10px'}} />;
@@ -163,8 +165,15 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
                     var currRouteIdArray = ['kmb' + inputRoutesArray[i] + '_I1','kmb' + inputRoutesArray[i] + '_O1',
                                             'ctb' + inputRoutesArray[i] + '_I1','ctb' + inputRoutesArray[i] + '_O1',
                                             'kmbctb' + inputRoutesArray[i] + '_I1','kmbctb' + inputRoutesArray[i] + '_O1',
-                                            'mtrbus' + inputRoutesArray[i] + '_I1','mtrbus' + inputRoutesArray[i] + '_O1',];
-        
+                                            'mtrbus' + inputRoutesArray[i] + '_I1','mtrbus' + inputRoutesArray[i] + '_O1'];
+
+                    if (inputRoutesArray[i] in mtrRouteName)
+                    {
+                        currRouteIdArray.push('mtr' + mtrRouteName[inputRoutesArray[i]] + '_UP1');
+                        currRouteIdArray.push('mtr' + mtrRouteName[inputRoutesArray[i]] + '_DOWN1');
+                    }
+                    console.log(currRouteIdArray);
+
                     for (var j=0 ; j<currRouteIdArray.length ; j++)
                     {
                         if (currRouteIdArray[j] in routeStopList)
@@ -351,6 +360,8 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
         else
         {
             newInput = currInput + letter;
+            if (letter in mtrRouteName)
+                newInput += '/';
         }
         
 
@@ -480,21 +491,22 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
                                         <div style={{margin:'2px', marginTop:'0px', height:'66px', backgroundColor:'white', display:'flex', borderRadius:'4px', border: '1px solid #e2e2e2', overflow:'hidden', flexDirection:'row'}} >
 
                                             <div style={{width:'20%', fontSize:'18px'}}>
-                                                <div style={{lineHeight:'30px', marginTop:'10px'}}>{item['route']}</div>
+                                                <div style={{lineHeight:'30px', marginTop:'10px', width:'100%', display:'flex', justifyContent:'center'}}><AutoTextSize maxFontSizePx='17'>{item['route']}</AutoTextSize></div>
                                                 <div style={{lineHeight:'15px', fontSize:'11px'}}>
                                                     {item['company'] == 'ctb' ? <div style={{backgroundImage: 'linear-gradient(to right, #fff25c, #fffac2)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{ctb[lang]}</div> : ''}
                                                     {item['company'] == 'kmb' ? <div style={{backgroundImage: 'linear-gradient(to right, #fdaaaa, #fde0e0)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{kmb[lang]}</div> : ''}
                                                     {item['company'] == 'kmbctb' ? <div style={{backgroundImage: 'linear-gradient(to right, #f4c1c1 50%, #fff68f 50%)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{kmbctb[lang]}</div> : ''}
                                                     {item['company'] == 'mtrbus' ? <div style={{backgroundImage: 'linear-gradient(to right, #ab060b 50%, #6c4c9f 50%)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px', color:'white'}} >{mtrbus[lang]}</div> : ''}
+                                                    {item['company'] == 'mtr' ? <div style={{background: '#ab060b', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px', color:'white'}} >{mtr[lang]}</div> : ''}
                                                 </div>
                                             </div>
 
                                             <div style={{width:'60%', lineHeight:'30px', textAlign:'left', margin:'4px'}}>
                                                 <div style={{display:'flex', flexDirection:'row', height:'50%'}}>
                                                     <div style={{fontSize:'11px', marginTop: '3px'}}>{to[lang]}&nbsp;</div>
-                                                    <div style={{fontSize:'17px', overflow:'hidden', wordBreak:'break-all'}}>{item['dest_tc']}</div>
+                                                    <div style={{width:'100%'}}><AutoTextSize maxFontSizePx='17'>{item['dest_tc']}</AutoTextSize></div>
                                                 </div>
-                                                <div style={{height:'50%', fontSize:'17px'}}>{item['name_tc']}</div>
+                                                <div style={{height:'50%'}}><AutoTextSize maxFontSizePx='17'>{item['name_tc']}</AutoTextSize></div>
                                             </div>
                                             <div style={{width:'20%', lineHeight:'20px'}}>
                                                 <div style={{display:'flex', flexDirection:'row', height:'33%'}}>
@@ -590,6 +602,18 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
                                                 <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('U')}>U</Button>
                                                 <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('W')}>W</Button>
                                             </div>
+
+                                            {lang == 'en' ? mtrRouteNameEn.map((item, index) => (
+                                                <div className={styles.row} style={{height:'60px', padding:'2px'}}>
+                                                    <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes(item)}>{item}</Button>
+                                                </div>
+                                            )):''}
+
+                                            {lang == 'tc' ? mtrRouteNameTc.map((item, index) => (
+                                                <div className={styles.row} style={{height:'60px', padding:'2px'}}>
+                                                    <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes(item)}>{item}</Button>
+                                                </div>
+                                            )):''}
                                         </div>
                                     </div>
                                 </div>

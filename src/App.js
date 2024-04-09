@@ -30,7 +30,6 @@ function App() {
                 const { latitude, longitude } = position.coords;
                 // await new Promise(resolve => setTimeout(resolve, 1000));
                 setLocation([latitude, longitude]);
-                console.log([latitude, longitude]);
             };
     
             const errorCallback = (error) => {

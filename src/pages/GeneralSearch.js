@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import styles from './styles/GeneralSearchStyle.module.css';
 import { Form, Button, Fade } from 'react-bootstrap';
 import { findClosestStop, roundDown } from '../utilities/LocationUtility';
-import { ctb, enterMultipleRoutes, generalSearch, kmb, kmbctb, minute, pleaseInputRoutes, quickSearch, to, unableToDownloadETA } from '../utilities/Locale';
+import { ctb, enterMultipleRoutes, generalSearch, kmb, kmbctb, minute, mtr, mtrbus, pleaseInputRoutes, quickSearch, to, unableToDownloadETA } from '../utilities/Locale';
 import { extractCtbEta, extractKmbEta, sortCoopEta, downloadJson } from '../utilities/JsonHandler';
 import AppBar from '../ui_components/AppBar';
 import SpinnerFullscreen from '../ui_components/SpinnerFullscreen';
@@ -12,6 +12,7 @@ import axios from 'axios';
 import * as Icon from 'react-bootstrap-icons';
 import { getStorageItem, getStorageItemDB, setStorageItem, setStorageItemDB } from '../utilities/LocalStorage';
 import { now } from 'moment';
+import { mtrRouteId, mtrRouteName, mtrRouteNameEn, mtrRouteNameTc } from '../utilities/MtrMetaData';
 
 const GeneralSearch = ({locationMain, setStartGettingLocation}) => {
     var backBtn = <Icon.ArrowLeft onClick={() => navigate('/', { replace: true })} style={{width:'50px', height:'50px', padding:'10px'}} />;
@@ -56,7 +57,13 @@ const GeneralSearch = ({locationMain, setStartGettingLocation}) => {
 
             for (var i=0 ; i<routeListData.length ; i++)
             {
-                const theKey = routeListData[i]['route'].substring(0, 1);
+                var theKey = '';
+                var route = routeListData[i]['route'];
+
+                if (route in mtrRouteId)
+                    theKey = route;
+                else
+                    theKey = route.substring(0, 1);
 
                 if (theKey in newRouteListData)
                 {
@@ -69,6 +76,7 @@ const GeneralSearch = ({locationMain, setStartGettingLocation}) => {
                 }
             }
 
+            console.log(newRouteListData);
             setRotueList(newRouteListData);
         }
 
@@ -87,22 +95,42 @@ const GeneralSearch = ({locationMain, setStartGettingLocation}) => {
     {
         var newDisplayList = [];
         const inputLength = inputRoutes.toString().length;
-        const theKey = inputRoutes.substring(0, 1);
-
+        
         if (inputLength > 0)
         {
-            if (theKey in routeList)
-            {
-                const searchTarger = routeList[theKey];
+            var theKey = inputRoutes.substring(0, 1);
 
-                for (var i=0 ; i<searchTarger.length ; i++)
+            if (inputRoutes.toString() in mtrRouteName)
+            {
+                theKey = mtrRouteName[inputRoutes.toString()];
+
+                if (theKey in routeList)
                 {
-                    if (searchTarger[i]['route'].substring(0, inputLength) == inputRoutes)
+                    const searchTarger = routeList[theKey];
+    
+                    for (var i=0 ; i<searchTarger.length ; i++)
                     {
                         newDisplayList.push(searchTarger[i]);
                     }
                 }
             }
+            else
+            {
+                theKey = inputRoutes.substring(0, 1);
+
+                if (theKey in routeList)
+                {
+                    const searchTarger = routeList[theKey];
+    
+                    for (var i=0 ; i<searchTarger.length ; i++)
+                    {
+                        if (searchTarger[i]['route'].substring(0, inputLength) == inputRoutes)
+                        {
+                            newDisplayList.push(searchTarger[i]);
+                        }
+                    }
+                }
+            } 
         }
 
         setDisplayList(newDisplayList);
@@ -123,7 +151,10 @@ const GeneralSearch = ({locationMain, setStartGettingLocation}) => {
         }
         else
         {
-            newInput = currInput + letter;
+            if (letter in mtrRouteName)
+                newInput = letter;
+            else
+                newInput = currInput + letter;
         }
         
         if (newInput == '')
@@ -196,6 +227,8 @@ const GeneralSearch = ({locationMain, setStartGettingLocation}) => {
                                                     {item['company'] == 'ctb' ? <div style={{backgroundImage: 'linear-gradient(to right, #fff25c, #fffac2)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{ctb[lang]}</div> : ''}
                                                     {item['company'] == 'kmb' ? <div style={{backgroundImage: 'linear-gradient(to right, #fdaaaa, #fde0e0)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{kmb[lang]}</div> : ''}
                                                     {item['company'] == 'kmbctb' ? <div style={{backgroundImage: 'linear-gradient(to right, #f4c1c1 50%, #fff68f 50%)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{kmbctb[lang]}</div> : ''}
+                                                    {item['company'] == 'mtrbus' ? <div style={{backgroundImage: 'linear-gradient(to right, #ab060b 50%, #6c4c9f 50%)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px', color:'white'}} >{mtrbus[lang]}</div> : ''}
+                                                    {item['company'] == 'mtr' ? <div style={{background: '#ab060b', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px', color:'white'}} >{mtr[lang]}</div> : ''}
                                                 </div>
                                             </div>
                                         </div>
@@ -275,6 +308,18 @@ const GeneralSearch = ({locationMain, setStartGettingLocation}) => {
                                                 <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('U')}>U</Button>
                                                 <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes('W')}>W</Button>
                                             </div>
+
+                                            {lang == 'en' ? mtrRouteNameEn.map((item, index) => (
+                                                <div className={styles.row} style={{height:'60px', padding:'2px'}}>
+                                                    <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes(item)}>{item}</Button>
+                                                </div>
+                                            )):''}
+
+                                            {lang == 'tc' ? mtrRouteNameTc.map((item, index) => (
+                                                <div className={styles.row} style={{height:'60px', padding:'2px'}}>
+                                                    <Button variant="light" size='lg' className={styles.numPadButton} onClick={() => onChangeInputRoutes(item)}>{item}</Button>
+                                                </div>
+                                            )):''}
                                         </div>
                                     </div>
                                 </div>
