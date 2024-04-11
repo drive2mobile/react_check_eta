@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Form, Button, Fade } from 'react-bootstrap';
 import { findClosestStop, roundDown } from '../utilities/LocationUtility';
 import { ctb, enterMultipleRoutes, kmb, kmbctb, minute, mtr, mtrbus, pleaseInputRoutes, quickSearch, to, unableToDownloadETA } from '../utilities/Locale';
-import { extractCtbEta, extractKmbEta, sortCoopEta, extractMtrbusEta, downloadJson } from '../utilities/JsonHandler';
+import { extractCtbEta, extractKmbEta, sortCoopEta, extractMtrbusEta, downloadJson, extractMtrEta } from '../utilities/JsonHandler';
 import { useNavigate } from 'react-router-dom';
 import AppBar from '../ui_components/AppBar';
 import styles from './styles/QuickSearchStyle.module.css';
@@ -297,6 +297,15 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
                             const response = await axios.post(url, body);
                             const resultArray = extractMtrbusEta(response.data, etaList[i]['stop']);
 
+                            etaList[i]['eta1'] = resultArray[0];
+                            etaList[i]['eta2'] = resultArray[1];
+                            etaList[i]['eta3'] = resultArray[2];
+                        }
+                        else if (company == 'mtr')
+                        {
+                            const url = `https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=${currItem['route']}&sta=${currItem['stop']}`;
+                            const response = await axios.get(url);
+                            const resultArray = extractMtrEta(response.data, currItem['route'], currItem['stop'], currItem['direction']);
                             etaList[i]['eta1'] = resultArray[0];
                             etaList[i]['eta2'] = resultArray[1];
                             etaList[i]['eta3'] = resultArray[2];

@@ -105,6 +105,34 @@ function extractMtrbusEta(jsonData, stop)
     return etaArray;
 }
 
+function extractMtrEta(jsonData, route, stop, direction)
+{
+    var dataArray = jsonData['data'][route + '-' + stop][direction];
+    var etaArray = ['-', '-', '-'];
+
+    try
+    {
+        for (var i=0 ; i<dataArray.length ; i++)
+        {
+            if (dataArray[i]['seq'] == 1)
+            {
+                etaArray[0] = calculateCoundDown(dataArray[i]['time']);
+            }
+            else if (dataArray[i]['seq'] == 2)
+            {
+                etaArray[1] = calculateCoundDown(dataArray[i]['time']);
+            }
+            else if (dataArray[i]['seq'] == 3)
+            {
+                etaArray[2] = calculateCoundDown(dataArray[i]['time']);
+            }
+        }
+    }
+    catch{}
+
+    return etaArray;
+}
+
 function sortCoopEta(etaArray)
 {
     var tempArray = [];
@@ -146,4 +174,4 @@ function calculateCoundDown(timestamp)
     return difference;
 }
 
-export { extractKmbEta, extractCtbEta, sortCoopEta, downloadJson, extractMtrbusEta }
+export { extractKmbEta, extractCtbEta, sortCoopEta, downloadJson, extractMtrbusEta, extractMtrEta }

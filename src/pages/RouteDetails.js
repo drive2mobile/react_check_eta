@@ -8,7 +8,7 @@ import AppBar from "../ui_components/AppBar";
 import ToastAlert from "../ui_components/ToastAlert";
 import SpinnerFullscreen from "../ui_components/SpinnerFullscreen";
 import * as Icon from 'react-bootstrap-icons';
-import { downloadJson, extractCtbEta, extractKmbEta, extractMtrbusEta, sortCoopEta } from "../utilities/JsonHandler";
+import { downloadJson, extractCtbEta, extractKmbEta, extractMtrEta, extractMtrbusEta, sortCoopEta } from "../utilities/JsonHandler";
 import axios from "axios";
 import { getStorageItemDB, setStorageItemDB } from "../utilities/LocalStorage";
 
@@ -202,6 +202,15 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
                     const body = {"language": "zh", "routeName": currItem['route']};
                     const response = await axios.post(url, body);
                     const resultArray = extractMtrbusEta(response.data, stopMarkers[selectedIndex]['stop']);
+                    stopMarkers[selectedIndex]['eta1'] = resultArray[0];
+                    stopMarkers[selectedIndex]['eta2'] = resultArray[1];
+                    stopMarkers[selectedIndex]['eta3'] = resultArray[2];
+                }
+                else if (company == 'mtr')
+                {
+                    const url = `https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=${currItem['route']}&sta=${currItem['stop']}`;
+                    const response = await axios.get(url);
+                    const resultArray = extractMtrEta(response.data, currItem['route'], currItem['stop'], currItem['direction']);
                     stopMarkers[selectedIndex]['eta1'] = resultArray[0];
                     stopMarkers[selectedIndex]['eta2'] = resultArray[1];
                     stopMarkers[selectedIndex]['eta3'] = resultArray[2];

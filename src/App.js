@@ -11,6 +11,8 @@ import HomePage from "./pages/HomePage";
 import Storage from "./pages/testing/Storage";
 import DownloadData from "./pages/DownloadData";
 import GeneralSearch from "./pages/GeneralSearch";
+import DownloadAudio from "./pages/testing/DownloadRTHK";
+import MergeTSFiles from "./pages/testing/DownloadRTHK";
 
 function App() {
     const [startGettingLocation, setStartGettingLocation] = useState(false);
@@ -55,6 +57,7 @@ function App() {
                 <Route exact path='/downloadData' element={<DownloadData/>}></Route>
                 <Route exact path='/storage' element={<Storage/>}></Route>
                 <Route exact path='/osm' element={<OSMMAP/>}></Route>
+                <Route exact path='/rthk' element={<MergeTSFiles/>}></Route>
             </Routes>
         </BrowserRouter>
     );
