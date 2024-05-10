@@ -3,7 +3,7 @@ import OSM from "../ui_components/OSM";
 import styles from './styles/RouteDetailsStyle.module.css';
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ctb, kmb, kmbctb, minute, quickSearch, to } from "../utilities/Locale";
+import { ctb, dayCode, from, kmb, kmbctb, minute, quickSearch, start, to } from "../utilities/Locale";
 import AppBar from "../ui_components/AppBar";
 import ToastAlert from "../ui_components/ToastAlert";
 import SpinnerFullscreen from "../ui_components/SpinnerFullscreen";
@@ -26,6 +26,7 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
     
     const[showLoading, setShowLoading] = useState(false);
     const[showContent, setShowContent] = useState(false);
+    const[selectedTab, setSelectedTab] = useState('map');
 
     const[toastText, setToastText] = useState('');
     const[toastTrigger,setToastTrigger] = useState(0);
@@ -34,6 +35,7 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
     const[mapLocation, setMapLocation] = useState([22.324681505, 114.176558367]);
     const[mapFullscreen, setMapFullscreen] = useState(false);
     const[selectedIndex, setSelectedIndex] = useState(1000);
+    const[timetable, setTimetable] = useState({});
 
     const[triggerShowMarkerLabel, setTriggerShowMarkerLabel] = useState(false);
     const[triggerScrollToIndex, setTriggerScrollToIndex] = useState(false);
@@ -95,6 +97,7 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
         const seq = urlParams.has('seq') ? parseInt(urlParams.get('seq')) : 0;
 
         var routeStopListData = await getStorageItemDB('routeStopList');
+        var timetableData = await getStorageItemDB('timetable');
         if (Object.keys(routeStopListData).length == 0)
         {
             navigate(`/downloaddata?autodownload=yes&prevpage=routedetails&routeid=${routeid}&seq=${seq}`, { replace: true });
@@ -108,6 +111,13 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
             setDest(routeStopList[0]['dest_' + lang]);
             setStopMarkers(routeStopList);
         }
+
+        if (routeid in timetableData)
+        {
+            setTimetable(timetableData[routeid]);
+            console.log(timetableData[routeid]);
+        }
+
         setShowLoading(false);
         setShowContent(true);
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -243,7 +253,8 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
                 {/* ===== APP BAR ===== */}
                 <AppBar leftIcon={backBtn} Header={appBarHeader} rightIcon={''}></AppBar>
 
-                <div style={{height: 'calc(100dvh - 50px)'}}>
+                {selectedTab == 'map' &&
+                    <div style={{height: 'calc(100dvh - 50px - 40px)'}}>
                     {showLoading == false ?
                         <OSM 
                             lang={lang} 
@@ -306,6 +317,43 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
                     ))}
                     </div>
 
+                    </div>
+                }      
+
+                {selectedTab == 'timetable' &&
+                    <Fade in={true} appear={true} >
+                        <div style={{height: 'calc(100dvh - 50px - 40px', overflow: 'auto', scrollbarWidth: 'none'}}>
+                            <div style={{marginLeft:'80px', marginRight:'80px', paddingTop:'20px', paddingBottom:'5px', 
+                            borderBottom:'2px solid #bdffb9', fontSize:'16px', color: '#484848'}}> 
+                                {from[lang] + stopMarkers[0]['name_tc'] + start[lang]}
+                            </div>
+                            {Object.entries(timetable).map(([key, value]) => (
+                                <div key={key} style={{paddingLeft:'80px', paddingRight:'80px', paddingTop:'0px', paddingBottom:'20px'}}> 
+                                    <div>{dayCode[key][lang]}</div>
+                                    {value.map((item, index) => (
+                                        <div key={index} style={{ display: 'flex', flexDirection: 'row' }}> 
+                                            <div style={{ width: '70%' }}>{item.timeFrom + ' - ' + item.timeTo}</div>
+                                            <div style={{ width: '30%', textAlign:'right' }}>{item.frequence + ' ' + minute[lang]}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+                    </Fade>
+                    
+                }         
+
+                <div style={{height:'39px', width:'100%', display:'flex', flexDirection:'row', backgroundColor:'white',
+                    lineHeight:'39px', textAlign:'center', borderTop:'1px solid #e2e2e2'}}>
+                    <div style={selectedTab == 'map' ?
+                        {height:'39px', width:'50%', color:'#484848', fontWeight:'bold' } :
+                        {height:'39px', width:'50%'}}
+                        onClick={() => {setSelectedTab('map');}}>Map</div>
+
+                    <div style={selectedTab == 'timetable' ?
+                        {height:'39px', width:'50%', color:'#484848', fontWeight:'bold' } :
+                        {height:'39px', width:'50%'}}
+                        onClick={() => {setSelectedTab('timetable');}}>Timetable</div>
                 </div>
             </div>
         </div>

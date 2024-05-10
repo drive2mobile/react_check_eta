@@ -172,17 +172,17 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
                         currRouteIdArray.push('mtr' + mtrRouteName[inputRoutesArray[i]] + '_UP1');
                         currRouteIdArray.push('mtr' + mtrRouteName[inputRoutesArray[i]] + '_DOWN1');
                     }
-                    console.log(currRouteIdArray);
 
                     for (var j=0 ; j<currRouteIdArray.length ; j++)
                     {
                         if (currRouteIdArray[j] in routeStopList)
                         {
+                            
                             if (validQuery != '') { validQuery += ','; }
                             validQuery += inputRoutesArray[j];
 
                             var closestStop = findClosestStop(locationMain[0].toString(), locationMain[1].toString(), routeStopList[currRouteIdArray[j]]);
-    
+                            console.log( routeStopList[currRouteIdArray[j]]);
                             if (closestStop != null) 
                             {
                                 closestStop['eta1'] = '-';
@@ -478,19 +478,19 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
                         }>
 
                             {suggestList.length > 0 && suggestList.map((item, index) => (
-                                <Fade in={true} appear={true} key={index} >
+                                // <Fade in={true} appear={true} key={index} >
                                     <div style={{height:'60px', width:'25%', display:'inline-block', textAlign:'center', lineHeight:'52px'}}>
                                         <div style={{margin:'4px', height:'52px', backgroundColor:'#F4F4F4'}} onClick={() => onClickRouteSuggestion(item)}>{item}</div>
                                     </div>
-                                </Fade>
+                                // </Fade>
                             ))}
 
                             {(suggestList.length == 0 && etaList.length == 0) && Object.entries(displayHistory).map(([key, value]) => (
-                                <Fade in={true} appear={true} key={key} >
+                                // <Fade in={true} appear={true} key={key} >
                                     <div style={{height:'60px', width:'100%', display:'inline-block', textAlign:'center', lineHeight:'52px'}}>
                                         <div style={{margin:'4px', height:'52px', backgroundColor:'#F4F4F4'}} onClick={() => onClickRouteSuggestion(key)}>{key}</div>
                                     </div>
-                                </Fade>
+                                // </Fade>
                             ))}
 
                             {etaList.length > 0 && etaList.map((item, index) => (

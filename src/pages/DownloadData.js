@@ -85,6 +85,12 @@ const DownloadData = () => {
         setDownloadedItem(3);
         var routeListData = await downloadJson(`https://webappdev.info:8081/routelist?timestamp=${timestamp}`);
         await setStorageItemDB('routeList', routeListData);
+        setProgress(0);
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        setDownloadedItem(4);
+        var timetableData = await downloadJson(`https://webappdev.info:8081/gettimetable?timestamp=${timestamp}`);
+        await setStorageItemDB('timetable', timetableData);
         setProgress(100);
         await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -162,7 +168,7 @@ const DownloadData = () => {
                             {showDownloadProgress == true ?
                             <div style={{marginTop:'40px', width:'50%'}}>
                                 <div >{mainText}</div>
-                                <div>{downloadedItem}/3</div>
+                                <div>{downloadedItem}/4</div>
                                 <ProgressBar variant="success" now={progress} style={{width:'100%'}} />
                             </div> : ''}
     

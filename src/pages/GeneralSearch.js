@@ -54,7 +54,6 @@ const GeneralSearch = ({locationMain, setStartGettingLocation}) => {
         else
         {
             var newRouteListData = {};
-
             for (var i=0 ; i<routeListData.length ; i++)
             {
                 var theKey = '';
@@ -76,7 +75,6 @@ const GeneralSearch = ({locationMain, setStartGettingLocation}) => {
                 }
             }
 
-            console.log(newRouteListData);
             setRotueList(newRouteListData);
         }
 
