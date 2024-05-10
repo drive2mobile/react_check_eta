@@ -495,7 +495,7 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
 
                             {etaList.length > 0 && etaList.map((item, index) => (
                                 <Fade in={true} appear={true} key={index}>
-                                    <div style={{height:'74px', width:'100%', display:'block', textAlign:'center'}} onClick={() => { navigate('/routedetails?routeid='+item['route_id']+'&seq='+(parseInt(item['seq'])-1)); }}>
+                                    <div style={{height:'74px', width:'100%', display:'block', textAlign:'center'}} onClick={() => { navigate('/routedetails?routeid='+item['route_id']); }}>
 
                                         <div style={{margin:'2px', marginTop:'0px', height:'66px', backgroundColor:'white', display:'flex', borderRadius:'4px', border: '1px solid #e2e2e2', overflow:'hidden', flexDirection:'row'}} >
 

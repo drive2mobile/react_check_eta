@@ -3,19 +3,17 @@ import styles from './styles/HomePageStyle.module.css';
 import * as ReactIcon from 'react-bootstrap-icons';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import ragdoll1 from "../images/ragdoll1.jpg";
 
 const HomePage = () => {
     const navigate = useNavigate();
-    const [open, setOpen] = useState(true);
-    // `${process.env.PUBLIC_URL}/picture/ragdoll1.jpg`
+
     return (
         <div className={styles.body}>
             <Fade in={true} appear={true} style={{transitionDuration: '0.8s'}}>
                 <div style={{height:'100dvh'}}>
                     <div style={{ height: 'calc(100dvh - 100px - 200px)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', fontSize: '25px', textAlign: 'center' }}>
                         <div>
-                            <img src={`https://webappdev.info/checketatest/picture/ragdoll1.jpg`} style={{ width: '50%', height: 'auto', padding: '0px', border: '0px solid black', borderRadius: '15px' }} />
+                            <img src={`https://webappdev.info/checketa/picture/logo_large.png`} style={{ width: '50%', height: 'auto', padding: '0px', border: '0px solid black', borderRadius: '15px' }} />
                         </div>
                         <div>
                             香港巴士到站查詢

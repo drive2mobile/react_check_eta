@@ -35,6 +35,9 @@ const dayCode = {
     '480':{'tc':'星期六、日、公眾假期', 'ts':'星期一至五 (公眾假期除外)', 'ts':'Sat, Sun and Public Holiday'},
     '511':{'tc':'星期一至日及公眾假期', 'ts':'星期一至五 (公眾假期除外)', 'ts':'All Days'},
 };
+const routeTab = {'tc':'路線', 'sc':'路線', 'en':'Route'};
+const scheduleTab = {'tc':'班次', 'sc':'班次', 'en':'Schedule'};
+
 export { quickSearch, generalSearch, enterMultipleRoutes, from, start, to, minute, pleaseAllowBrowserToAccessLocation, 
     kmb, ctb, kmbctb, mtrbus, mtr, pleaseInputRoutes, unableToDownloadETA, downloadData, downloadingData, downloadComplete,
-    deviceVersionText, serverVersionText, dayCode }
+    deviceVersionText, serverVersionText, dayCode, routeTab, scheduleTab }

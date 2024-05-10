@@ -2,16 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './styles/GeneralSearchStyle.module.css';
 import { Form, Button, Fade } from 'react-bootstrap';
-import { findClosestStop, roundDown } from '../utilities/LocationUtility';
-import { ctb, enterMultipleRoutes, generalSearch, kmb, kmbctb, minute, mtr, mtrbus, pleaseInputRoutes, quickSearch, to, unableToDownloadETA } from '../utilities/Locale';
-import { extractCtbEta, extractKmbEta, sortCoopEta, downloadJson } from '../utilities/JsonHandler';
+import { ctb, enterMultipleRoutes, generalSearch, kmb, kmbctb, mtr, mtrbus, to } from '../utilities/Locale';
 import AppBar from '../ui_components/AppBar';
 import SpinnerFullscreen from '../ui_components/SpinnerFullscreen';
 import ToastAlert from '../ui_components/ToastAlert';
-import axios from 'axios';
 import * as Icon from 'react-bootstrap-icons';
-import { getStorageItem, getStorageItemDB, setStorageItem, setStorageItemDB } from '../utilities/LocalStorage';
-import { now } from 'moment';
+import { getStorageItemDB } from '../utilities/LocalStorage';
 import { mtrRouteId, mtrRouteName, mtrRouteNameEn, mtrRouteNameTc } from '../utilities/MtrMetaData';
 
 const GeneralSearch = ({locationMain, setStartGettingLocation}) => {
@@ -204,7 +200,7 @@ const GeneralSearch = ({locationMain, setStartGettingLocation}) => {
                         }>
 
                             {displayList.length > 0 && displayList.map((item, index) => (
-                                <Fade in={true} appear={true} key={index}>
+                                // <Fade in={true} appear={true} key={index}>
                                     <div style={{height:'64px', width:'100%', display:'block', textAlign:'center'}} onClick={() => { navigate('/routedetails?routeid='+item['route_id']); }}>
 
                                         <div style={{margin:'2px', marginTop:'0px', height:'56px', backgroundColor:'white', display:'flex', borderRadius:'4px', border: '1px solid #e2e2e2', overflow:'hidden', flexDirection:'row'}} >
@@ -231,7 +227,7 @@ const GeneralSearch = ({locationMain, setStartGettingLocation}) => {
                                             </div>
                                         </div>
                                     </div>
-                                </Fade>
+                                // </Fade>
                             ))}
 
                         </div>

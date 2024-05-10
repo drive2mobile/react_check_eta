@@ -3,7 +3,7 @@ import OSM from "../ui_components/OSM";
 import styles from './styles/RouteDetailsStyle.module.css';
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ctb, dayCode, from, kmb, kmbctb, minute, quickSearch, start, to } from "../utilities/Locale";
+import { ctb, dayCode, from, kmb, kmbctb, minute, quickSearch, routeTab, scheduleTab, start, to } from "../utilities/Locale";
 import AppBar from "../ui_components/AppBar";
 import ToastAlert from "../ui_components/ToastAlert";
 import SpinnerFullscreen from "../ui_components/SpinnerFullscreen";
@@ -11,6 +11,7 @@ import * as Icon from 'react-bootstrap-icons';
 import { downloadJson, extractCtbEta, extractKmbEta, extractMtrEta, extractMtrbusEta, sortCoopEta } from "../utilities/JsonHandler";
 import axios from "axios";
 import { getStorageItemDB, setStorageItemDB } from "../utilities/LocalStorage";
+import { findClosestStopIndex } from "../utilities/LocationUtility";
 
 const RouteDetails = ({locationMain, setStartGettingLocation}) => {
 
@@ -41,6 +42,7 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
     const[triggerScrollToIndex, setTriggerScrollToIndex] = useState(false);
     const[triggerDownload, setTriggerDownload] = useState(false);
     const[triggerAutoDownload, setTriggerAutoDownload] = useState(false);
+    const[triggerFindClosestStop, setTriggerClosestStop] = useState(false);
 
     useEffect(() => {
         initialize();
@@ -59,6 +61,21 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
     useEffect(() => {
         scrollToIndex();
     }, [triggerScrollToIndex])
+
+    useEffect(() => {
+        if (triggerFindClosestStop)
+        {
+            if (locationMain.length > 0)
+            {
+                var newSeq = findClosestStopIndex(locationMain[0], locationMain[1], stopMarkers);
+                setSelectedIndex(newSeq);
+                setTriggerScrollToIndex(true);
+                setTriggerShowMarkerLabel(true);
+                setTriggerDownload(true);
+                setTriggerClosestStop(false);
+            }
+        }
+    }, [triggerFindClosestStop])
 
     useEffect(() => {
         let timerConstant = null;
@@ -94,19 +111,17 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
         setShowLoading(true);
        
         const routeid = urlParams.get('routeid');
-        const seq = urlParams.has('seq') ? parseInt(urlParams.get('seq')) : 0;
 
         var routeStopListData = await getStorageItemDB('routeStopList');
         var timetableData = await getStorageItemDB('timetable');
         if (Object.keys(routeStopListData).length == 0)
         {
-            navigate(`/downloaddata?autodownload=yes&prevpage=routedetails&routeid=${routeid}&seq=${seq}`, { replace: true });
+            navigate(`/downloaddata?autodownload=yes&prevpage=routedetails&routeid=${routeid}`, { replace: true });
         }   
 
         if (routeid in routeStopListData)
         {   
             var routeStopList = routeStopListData[routeid];
-            routeStopList[seq]['show'] = true;
             setRoute(routeStopList[0]['route']);
             setDest(routeStopList[0]['dest_' + lang]);
             setStopMarkers(routeStopList);
@@ -115,16 +130,12 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
         if (routeid in timetableData)
         {
             setTimetable(timetableData[routeid]);
-            console.log(timetableData[routeid]);
         }
 
         setShowLoading(false);
         setShowContent(true);
         await new Promise(resolve => setTimeout(resolve, 500));
-        setSelectedIndex(seq);
-        setTriggerScrollToIndex(true);
-        setTriggerShowMarkerLabel(true);
-        setTriggerDownload(true);
+        setTriggerClosestStop(true);
     }
 
     function showMarkerLabel(){
@@ -332,8 +343,10 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
                                     <div>{dayCode[key][lang]}</div>
                                     {value.map((item, index) => (
                                         <div key={index} style={{ display: 'flex', flexDirection: 'row' }}> 
-                                            <div style={{ width: '70%' }}>{item.timeFrom + ' - ' + item.timeTo}</div>
-                                            <div style={{ width: '30%', textAlign:'right' }}>{item.frequence + ' ' + minute[lang]}</div>
+                                            <div style={{ width: '70%' }}>{item['startTime']}</div>
+                                            <div style={{ width: '30%', textAlign:'right' }}>
+                                            {item['frequency'] == undefined ?  "" : item['frequency'] + ' ' + minute[lang]}
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -346,14 +359,14 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
                 <div style={{height:'39px', width:'100%', display:'flex', flexDirection:'row', backgroundColor:'white',
                     lineHeight:'39px', textAlign:'center', borderTop:'1px solid #e2e2e2'}}>
                     <div style={selectedTab == 'map' ?
-                        {height:'39px', width:'50%', color:'#484848', fontWeight:'bold' } :
+                        {height:'39px', width:'50%', color:'#484848', fontWeight:'bold', textDecoration:'underline' } :
                         {height:'39px', width:'50%'}}
-                        onClick={() => {setSelectedTab('map');}}>Map</div>
+                        onClick={() => {setSelectedTab('map');}}>{routeTab[lang]}</div>
 
                     <div style={selectedTab == 'timetable' ?
-                        {height:'39px', width:'50%', color:'#484848', fontWeight:'bold' } :
+                        {height:'39px', width:'50%', color:'#484848', fontWeight:'bold', textDecoration:'underline' } :
                         {height:'39px', width:'50%'}}
-                        onClick={() => {setSelectedTab('timetable');}}>Timetable</div>
+                        onClick={() => {setSelectedTab('timetable');}}>{scheduleTab[lang]}</div>
                 </div>
             </div>
         </div>

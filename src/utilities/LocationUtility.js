@@ -114,4 +114,19 @@ function findClosestStop(lat, lon, routeStopList) {
 	return closestStop;
 }
 
-export { getLocation, roundDown, addInterval, minusInterval, calculateDistance, findClosestStop, getLocationStream }
+function findClosestStopIndex(lat, lon, routeStopList) {
+	var closestStopIndex = 0;
+	var closestDistance = 1000;
+
+	for (var i = 0; i < routeStopList.length; i++) {
+		var currDistance = calculateDistance(parseFloat(lat), parseFloat(lon), parseFloat(routeStopList[i]['lat']), parseFloat(routeStopList[i]['long']));
+		if (currDistance < closestDistance) {
+			closestDistance = currDistance;
+			closestStopIndex = i;
+		}
+	}
+
+	return closestStopIndex;
+}
+
+export { getLocation, roundDown, addInterval, minusInterval, calculateDistance, findClosestStop, getLocationStream, findClosestStopIndex }
