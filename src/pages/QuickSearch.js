@@ -43,8 +43,6 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
     const[triggerAutoDownload, setTriggerAutoDownload] = useState(false);
 
     const[history, setHistory] = useState({});
-    const[displayHistory, setDisplayHistory] = useState([]);
-    var validQuery = {};
 
     useEffect(() => {
         initialize();
@@ -57,10 +55,6 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
         {
             setTriggerBuildEtaList(true);
             setTriggerSearch(false);
-        }
-        if (locationMain.length != 0)
-        {
-            buildHistory();
         }
     },[locationMain, triggerSearch])
 
@@ -104,8 +98,9 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
     async function initialize(){
         setStartGettingLocation(true);
 
-        var uniqueRouteList = await getStorageItemDB('uniqueRouteList');
-        var routeStopListData = await getStorageItemDB('routeStopList');
+        var uniqueRouteList = await getStorageItemDB('uniqueRouteList', 'array');
+        var routeStopListData = await getStorageItemDB('routeStopList', 'object');
+        var historyData = await getStorageItemDB('history', 'array');
         if (Object.keys(uniqueRouteList).length == 0 || Object.keys(routeStopListData).length == 0)
         {
             navigate('/downloaddata?autodownload=yes&prevpage=quicksearch', { replace: true });
@@ -114,6 +109,9 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
         {
             setRotueList(uniqueRouteList);
             setRouteStopList(routeStopListData);
+            console.log('history');
+            console.log(historyData);
+            setHistory(historyData);
         }
 
         if (urlParams.has('query'))
@@ -126,25 +124,6 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
         setShowContent(true); 
     }
 
-    async function buildHistory()
-    {
-        console.log('history');
-        var historyTemp = await getStorageItem('item1');
-        var latRoundDown = roundDown(locationMain[0].toString());
-        var longRoundDown = roundDown(locationMain[1].toString());
-        var theKey = latRoundDown + '_' + longRoundDown;
-
-        console.log(theKey);
-        if (historyTemp == null)
-            historyTemp = {};
-        if (theKey in historyTemp)
-        {
-            setDisplayHistory(historyTemp[theKey]);
-            console.log(historyTemp[theKey]);
-        }
-
-    }
-
     async function buildEtaList()
     {
         if (triggerBuildEtaList)
@@ -154,11 +133,10 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
             {
                 urlParams.set('query', inputRoutes);
                 navigate('?' + urlParams.toString(), { replace: true });
-
-                var validQuery = '';
     
                 var newEtaList = [];
                 var inputRoutesArray = inputRoutes.split('/');
+                var newHistory = history;
     
                 for (var i=0 ; i<inputRoutesArray.length ; i++)
                 {
@@ -176,46 +154,38 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
                     for (var j=0 ; j<currRouteIdArray.length ; j++)
                     {
                         if (currRouteIdArray[j] in routeStopList)
-                        {
-                            
-                            if (validQuery != '') { validQuery += ','; }
-                            validQuery += inputRoutesArray[j];
-
+                        {    
                             var closestStop = findClosestStop(locationMain[0].toString(), locationMain[1].toString(), routeStopList[currRouteIdArray[j]]);
-                            console.log( routeStopList[currRouteIdArray[j]]);
                             if (closestStop != null) 
                             {
                                 closestStop['eta1'] = '-';
                                 closestStop['eta2'] = '-';
                                 closestStop['eta3'] = '-';
                                 newEtaList.push(closestStop);
+
+                                var existIndex = -1;
+                                for (var k=0 ; k<newHistory.length ; k++)
+                                {
+                                    if (newHistory[k] == closestStop['route'])
+                                    {
+                                        existIndex = k;
+                                        break;
+                                    }
+                                }
+
+                                if (existIndex != -1)
+                                    newHistory.splice(existIndex,1);
+
+                                newHistory.unshift(closestStop['route']);
                             }
                         }  
                     }
                 }
     
-                if (validQuery != '')
-                {
-                    var itemTemp = await getStorageItem('item1');
-                    if (itemTemp == null)
-                        itemTemp = {};
 
-                    var latRoundDown = roundDown(locationMain[0].toString());
-                    var longRoundDown = roundDown(locationMain[1].toString());
-                    var theKey = latRoundDown + '_' + longRoundDown;
-
-                    var arr = {};
-                    if (theKey in itemTemp)
-                    {
-                        arr = itemTemp[theKey];
-                    }
-                    arr[inputRoutes] = inputRoutes;
-
-                    itemTemp[theKey] = arr;
-
-                    setStorageItem('item1', itemTemp);
-                }
-
+                setStorageItemDB('history', newHistory);
+                console.log('new History');
+                console.log(newHistory);
                 setSuggestList([]);
                 setEtaList(newEtaList);
                 setTriggerDownload((prev) => prev+1);
@@ -471,26 +441,16 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
 
                         {/* ===== MAIN COUTE CONTENT ===== */}
                         <div style={ showKeyboard ? 
-                            {height:'calc(100dvh - 50px - 60px - 248px)', padding:'5px', overflowY:'hidden', display:'block', 
+                            {height:'calc(100dvh - 50px - 60px - 248px - 50px)', padding:'5px', overflowY:'hidden', display:'block', 
                             flexDirection:'row', justifyContent:'flex-start', flexWrap:'wrap', overflow: 'auto', scrollbarWidth: 'none',} :
-                            {height:'calc(100dvh - 60px - 60px)', padding:'5px', overflowY:'hidden', display:'block', 
+                            {height:'calc(100dvh - 50px - 60px - 50px)', padding:'5px', overflowY:'hidden', display:'block', 
                             flexDirection:'row', justifyContent:'flex-start', flexWrap:'wrap', overflow: 'auto', scrollbarWidth: 'none',} 
                         }>
 
                             {suggestList.length > 0 && suggestList.map((item, index) => (
-                                // <Fade in={true} appear={true} key={index} >
-                                    <div style={{height:'60px', width:'25%', display:'inline-block', textAlign:'center', lineHeight:'52px'}}>
-                                        <div style={{margin:'4px', height:'52px', backgroundColor:'#F4F4F4'}} onClick={() => onClickRouteSuggestion(item)}>{item}</div>
-                                    </div>
-                                // </Fade>
-                            ))}
-
-                            {(suggestList.length == 0 && etaList.length == 0) && Object.entries(displayHistory).map(([key, value]) => (
-                                // <Fade in={true} appear={true} key={key} >
-                                    <div style={{height:'60px', width:'100%', display:'inline-block', textAlign:'center', lineHeight:'52px'}}>
-                                        <div style={{margin:'4px', height:'52px', backgroundColor:'#F4F4F4'}} onClick={() => onClickRouteSuggestion(key)}>{key}</div>
-                                    </div>
-                                // </Fade>
+                                <div key={index} style={{height:'60px', width:'25%', display:'inline-block', textAlign:'center', lineHeight:'52px'}}>
+                                    <div style={{margin:'4px', height:'52px', backgroundColor:'#F4F4F4'}} onClick={() => onClickRouteSuggestion(item)}>{item}</div>
+                                </div>
                             ))}
 
                             {etaList.length > 0 && etaList.map((item, index) => (
@@ -537,6 +497,16 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
                                 </Fade>
                             ))}
 
+                        </div>
+
+                        {/* ===== HISTORY ===== */}
+                        <div style={{height:'49px', width:'100%', display:'flex', flexDirection:'row', overflowX:'scroll', 
+                            scrollbarWidth:'none', borderTop:'1px solid #e2e2e2'}}>
+                            {history.length > 0 && history.map((item, index) => (
+                                <div style={{minWidth:'70px', lineHeight:'49px', textAlign:'center'}}
+                                    onClick={() => {setInputRoutes(prev => prev + item + '/')}}
+                                >{item}</div>
+                            ))}
                         </div>
 
                         {/* ===== NUM PAD ===== */}

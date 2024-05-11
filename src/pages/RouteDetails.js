@@ -112,8 +112,8 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
        
         const routeid = urlParams.get('routeid');
 
-        var routeStopListData = await getStorageItemDB('routeStopList');
-        var timetableData = await getStorageItemDB('timetable');
+        var routeStopListData = await getStorageItemDB('routeStopList', 'object');
+        var timetableData = await getStorageItemDB('timetable', 'object');
         if (Object.keys(routeStopListData).length == 0)
         {
             navigate(`/downloaddata?autodownload=yes&prevpage=routedetails&routeid=${routeid}`, { replace: true });

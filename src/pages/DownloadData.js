@@ -44,7 +44,7 @@ const DownloadData = () => {
     {
         const timestamp = new Date().getTime();
 
-        const newDeviceVersion = await getStorageItemDB('version');
+        const newDeviceVersion = await getStorageItemDB('version', 'object');
         console.log(newDeviceVersion);
         if ('dateString' in newDeviceVersion)
             setDeviceVersion(newDeviceVersion['dateString']);
