@@ -3,6 +3,7 @@ import styles from './styles/HomePageStyle.module.css';
 import * as ReactIcon from 'react-bootstrap-icons';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { hostURL } from '../utilities/Constant';
 
 const HomePage = () => {
     const navigate = useNavigate();
@@ -13,7 +14,7 @@ const HomePage = () => {
                 <div style={{height:'100dvh'}}>
                     <div style={{ height: 'calc(100dvh - 100px - 200px)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', fontSize: '25px', textAlign: 'center' }}>
                         <div>
-                            <img src={`https://webappdev.info/checketa/picture/logo_large.png`} style={{ width: '50%', height: 'auto', padding: '0px', border: '0px solid black', borderRadius: '15px' }} />
+                            <img src={`${hostURL}/picture/logo_large.png`} style={{ width: '50%', height: 'auto', padding: '0px', border: '0px solid black', borderRadius: '15px' }} />
                         </div>
                         <div>
                             香港巴士到站查詢

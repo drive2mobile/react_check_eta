@@ -10,6 +10,7 @@ import { Form, Button, Fade } from 'react-bootstrap';
 import * as Icon from 'react-bootstrap-icons';
 import { deviceVersionText, downloadComplete, downloadData, downloadingData, serverVersionText } from "../utilities/Locale";
 import ProgressBar from 'react-bootstrap/ProgressBar';
+import { hostURL } from "../utilities/Constant";
 
 const DownloadData = () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -49,7 +50,7 @@ const DownloadData = () => {
         if ('dateString' in newDeviceVersion)
             setDeviceVersion(newDeviceVersion['dateString']);
 
-        const newServerVersion = await downloadJson(`https://webappdev.info:8081/getlatestversion?timestamp=${timestamp}`);
+        const newServerVersion = await downloadJson(`${hostURL}/data/FINAL_timestamp.json?timestamp=${timestamp}`);
         if ('dateString' in newServerVersion)
             setServerVersion(newServerVersion['dateString']);    
 
@@ -67,29 +68,29 @@ const DownloadData = () => {
     async function download() {
         const timestamp = new Date().getTime();
 
-        const newVersion = await downloadJson(`https://webappdev.info:8081/getlatestversion?timestamp=${timestamp}`);
+        const newVersion = await downloadJson(`${hostURL}/data/FINAL_timestamp.json?timestamp=${timestamp}`);
         await setStorageItemDB('version', newVersion);
 
         setDownloadedItem(1);
-        const uniqueroutelistData = await downloadJson(`https://webappdev.info:8081/uniqueroutelist?timestamp=${timestamp}`);
+        const uniqueroutelistData = await downloadJson(`${hostURL}/data/FINAL_unique_route_list.json?timestamp=${timestamp}`);
         await setStorageItemDB('uniqueRouteList', uniqueroutelistData);
         setProgress(0);
         await new Promise(resolve => setTimeout(resolve, 500));
 
         setDownloadedItem(2);
-        var routeStopListData = await downloadJson(`https://webappdev.info:8081/routestoplist?timestamp=${timestamp}`);
+        var routeStopListData = await downloadJson(`${hostURL}/data/FINAL_route_stop_list.json?timestamp=${timestamp}`);
         await setStorageItemDB('routeStopList', routeStopListData);
         setProgress(0);
         await new Promise(resolve => setTimeout(resolve, 500));
 
         setDownloadedItem(3);
-        var routeListData = await downloadJson(`https://webappdev.info:8081/routelist?timestamp=${timestamp}`);
+        var routeListData = await downloadJson(`${hostURL}/data/FINAL_route_list.json?timestamp=${timestamp}`);
         await setStorageItemDB('routeList', routeListData);
         setProgress(0);
         await new Promise(resolve => setTimeout(resolve, 500));
 
         setDownloadedItem(4);
-        var timetableData = await downloadJson(`https://webappdev.info:8081/gettimetable?timestamp=${timestamp}`);
+        var timetableData = await downloadJson(`${hostURL}/data/FINAL_timetable.json?timestamp=${timestamp}`);
         await setStorageItemDB('timetable', timetableData);
         setProgress(100);
         await new Promise(resolve => setTimeout(resolve, 500));
