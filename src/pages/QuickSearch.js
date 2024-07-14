@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Form, Button, Fade } from 'react-bootstrap';
 import { findClosestStop, roundDown } from '../utilities/LocationUtility';
-import { ctb, enterMultipleRoutes, kmb, kmbctb, minute, mtr, mtrbus, pleaseInputRoutes, quickSearch, to, unableToDownloadETA } from '../utilities/Locale';
+import { language, dayCode } from '../utilities/Locale';
 import { extractCtbEta, extractKmbEta, sortCoopEta, extractMtrbusEta, downloadJson, extractMtrEta } from '../utilities/JsonHandler';
 import { useNavigate } from 'react-router-dom';
 import AppBar from '../ui_components/AppBar';
@@ -15,12 +15,11 @@ import { now } from 'moment';
 import { mtrRouteName, mtrRouteNameEn, mtrRouteNameTc } from '../utilities/MtrMetaData';
 import { AutoTextSize } from 'auto-text-size'
 
-const QuickSearch = ({locationMain, setStartGettingLocation}) => {
+const QuickSearch = ({lang, setLang, locationMain, setStartGettingLocation}) => {
     var backBtn = <Icon.ArrowLeft onClick={() => navigate('/', { replace: true })} style={{width:'50px', height:'50px', padding:'10px'}} />;
     var shareBtn = <Icon.ShareFill onClick={() => shareLink() } style={{width:'50px', height:'50px', padding:'13px'}} />;
     const navigate = useNavigate();
     const urlParams = new URLSearchParams(window.location.search);
-    const[lang, setLang] = useState('tc');
     const[timer, setTimer] = useState(null);
 
     const[showKeyboard, setShowKeyboard] = useState(true);
@@ -195,7 +194,7 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
                 setSuggestList([]);
                 setEtaList([]);
                 setToastTrigger((prev) => prev+1);
-                setToastText(pleaseInputRoutes[lang]);
+                setToastText(language.pleaseInputRoutes[lang]);
             }
             setTriggerBuildEtaList(false);
             setShowLoading(false);
@@ -286,7 +285,7 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
                 }
                 catch(error)
                 {
-                    setToastText(unableToDownloadETA[lang]);
+                    setToastText(language.unableToDownloadETA[lang]);
                     setToastTrigger((prev) => prev+1);
                 }
             }
@@ -424,7 +423,7 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
             <div style={{height:'100vh'}}>
 
                 {/* ===== APP BAR ===== */}
-                <AppBar leftIcon={backBtn} Header={quickSearch[lang]} rightIcon={shareBtn}></AppBar>
+                <AppBar leftIcon={backBtn} Header={language.quickSearch[lang]} rightIcon={shareBtn}></AppBar>
 
                 
                 <Fade in={showContent} appear={true} style={{transitionDuration: '0.3s'}}>
@@ -433,7 +432,7 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
                         <div className={styles.etaListContainer}>
                             {/* ===== ROUTE INPUT ===== */}
                             <div className={styles.routeInput}>
-                                <Form.Control type="text" value={inputRoutes} placeholder={enterMultipleRoutes[lang]} readOnly={true} style={{height:'100%'}}/>
+                                <Form.Control type="text" value={inputRoutes} placeholder={language.enterMultipleRoutes[lang]} readOnly={true} style={{height:'100%'}}/>
                                 <Button variant="light" onClick={() => onChangeInputRoutes('clear')}
                                     style={{position:'absolute', right:'15px', top: '8px', textAlign:'center', height:'44px', width:'44px', borderRadius:'22px', padding:'0px'}} >
                                     <Icon.X style={{height:'25px', width:'25px'}}/>
@@ -453,40 +452,40 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
 
                                 {etaList.length > 0 && etaList.map((item, index) => (
                                     <Fade in={true} appear={true} key={index}>
-                                        <div style={{height:'74px', width:'100%', display:'block', textAlign:'center'}} onClick={() => { navigate('/routedetails?routeid='+item['route_id']); }}>
+                                        <div style={{height:'74px', width:'100%', display:'block', textAlign:'center', cursor:'pointer'}} onClick={() => { navigate('/routedetails?routeid='+item['route_id']); }}>
 
                                             <div style={{margin:'2px', marginTop:'0px', height:'66px', backgroundColor:'white', display:'flex', borderRadius:'4px', border: '1px solid #e2e2e2', overflow:'hidden', flexDirection:'row'}} >
 
                                                 <div style={{width:'20%', fontSize:'18px'}}>
                                                     <div style={{lineHeight:'30px', marginTop:'10px', width:'100%', display:'flex', justifyContent:'center'}}><AutoTextSize maxFontSizePx='17'>{item['route']}</AutoTextSize></div>
                                                     <div style={{lineHeight:'15px', fontSize:'11px'}}>
-                                                        {item['company'] == 'ctb' ? <div style={{backgroundImage: 'linear-gradient(to right, #fff25c, #fffac2)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{ctb[lang]}</div> : ''}
-                                                        {item['company'] == 'kmb' ? <div style={{backgroundImage: 'linear-gradient(to right, #fdaaaa, #fde0e0)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{kmb[lang]}</div> : ''}
-                                                        {item['company'] == 'kmbctb' ? <div style={{backgroundImage: 'linear-gradient(to right, #f4c1c1 50%, #fff68f 50%)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{kmbctb[lang]}</div> : ''}
-                                                        {item['company'] == 'mtrbus' ? <div style={{backgroundImage: 'linear-gradient(to right, #ab060b 50%, #6c4c9f 50%)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px', color:'white'}} >{mtrbus[lang]}</div> : ''}
-                                                        {item['company'] == 'mtr' ? <div style={{background: '#ab060b', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px', color:'white'}} >{mtr[lang]}</div> : ''}
+                                                        {item['company'] == 'ctb' ? <div style={{backgroundImage: 'linear-gradient(to right, #fff25c, #fffac2)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{language.ctb[lang]}</div> : ''}
+                                                        {item['company'] == 'kmb' ? <div style={{backgroundImage: 'linear-gradient(to right, #fdaaaa, #fde0e0)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{language.kmb[lang]}</div> : ''}
+                                                        {item['company'] == 'kmbctb' ? <div style={{backgroundImage: 'linear-gradient(to right, #f4c1c1 50%, #fff68f 50%)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{language.kmbctb[lang]}</div> : ''}
+                                                        {item['company'] == 'mtrbus' ? <div style={{backgroundImage: 'linear-gradient(to right, #ab060b 50%, #6c4c9f 50%)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px', color:'white'}} >{language.mtrbus[lang]}</div> : ''}
+                                                        {item['company'] == 'mtr' ? <div style={{background: '#ab060b', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px', color:'white'}} >{language.mtr[lang]}</div> : ''}
                                                     </div>
                                                 </div>
 
                                                 <div style={{width:'60%', lineHeight:'30px', textAlign:'left', margin:'4px'}}>
                                                     <div style={{display:'flex', flexDirection:'row', height:'50%'}}>
-                                                        <div style={{fontSize:'11px', marginTop: '3px'}}>{to[lang]}&nbsp;</div>
-                                                        <div style={{width:'100%'}}><AutoTextSize maxFontSizePx='17'>{item['dest_tc']}</AutoTextSize></div>
+                                                        <div style={{fontSize:'11px', marginTop: '3px'}}>{language.to[lang]}&nbsp;</div>
+                                                        <div style={{width:'100%'}}><AutoTextSize maxFontSizePx='17'>{item[`dest_${lang}`]}</AutoTextSize></div>
                                                     </div>
-                                                    <div style={{height:'50%'}}><AutoTextSize maxFontSizePx='17'>{item['name_tc']}</AutoTextSize></div>
+                                                    <div style={{height:'50%'}}><AutoTextSize maxFontSizePx='17'>{item[`name_${lang}`]}</AutoTextSize></div>
                                                 </div>
                                                 <div style={{width:'20%', lineHeight:'20px'}}>
                                                     <div style={{display:'flex', flexDirection:'row', height:'33%'}}>
                                                         <div style={{width:'50%', textAlign:'right'}}>{item['eta1']}&nbsp;</div>
-                                                        <div style={{width:'50%', textAlign:'left', fontSize:'11px', marginTop: 'auto'}}>{minute[lang]}</div>
+                                                        <div style={{width:'50%', textAlign:'left', fontSize:'11px', marginTop: 'auto'}}>{language.minute[lang]}</div>
                                                     </div>
                                                     <div style={{display:'flex', flexDirection:'row', height:'33%'}}>
                                                         <div style={{width:'50%', textAlign:'right'}}>{item['eta2']}&nbsp;</div>
-                                                        <div style={{width:'50%', textAlign:'left', fontSize:'11px', marginTop: 'auto'}}>{minute[lang]}</div>
+                                                        <div style={{width:'50%', textAlign:'left', fontSize:'11px', marginTop: 'auto'}}>{language.minute[lang]}</div>
                                                     </div>
                                                     <div style={{display:'flex', flexDirection:'row', height:'33%'}}>
                                                         <div style={{width:'50%', textAlign:'right'}}>{item['eta3']}&nbsp;</div>
-                                                        <div style={{width:'50%', textAlign:'left', fontSize:'11px', marginTop: 'auto'}}>{minute[lang]}</div>
+                                                        <div style={{width:'50%', textAlign:'left', fontSize:'11px', marginTop: 'auto'}}>{language.minute[lang]}</div>
                                                     </div>
                                                 </div>
                                                 

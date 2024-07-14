@@ -1,5 +1,5 @@
 import { Fade } from "react-bootstrap"
-import { dayCode, from, minute, start } from "../utilities/Locale"
+import { dayCode, language } from "../utilities/Locale"
 
 const Timetable = ({ className, lang, stopMarkers, timetable }) => {
     return (
@@ -12,7 +12,7 @@ const Timetable = ({ className, lang, stopMarkers, timetable }) => {
                     <div style={{ marginLeft: '80px', marginRight: '80px', paddingTop: '20px', paddingBottom: '5px',
                         borderBottom: '2px solid #bdffb9', fontSize: '16px', color: '#484848'
                     }}>
-                        {from[lang] + stopMarkers[0]['name_tc'] + start[lang]}
+                        {language.from[lang] + stopMarkers[0][`name_${lang}`] + language.start[lang]}
                     </div>
 
                     {/* ACTUAL TIME TABLE */}
@@ -31,7 +31,7 @@ const Timetable = ({ className, lang, stopMarkers, timetable }) => {
 
                                     {/* FREQUENCY */}
                                     <div style={{ width: '30%', textAlign: 'right' }}>
-                                        {item['frequency'] == undefined ? "" : item['frequency'] + ' ' + minute[lang]}
+                                        {item['frequency'] == undefined ? "" : item['frequency'] + ' ' + language.minute[lang]}
                                     </div>
                                 </div>
                             ))}

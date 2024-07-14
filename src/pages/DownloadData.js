@@ -8,21 +8,20 @@ import ToastAlert from "../ui_components/ToastAlert";
 import AppBar from "../ui_components/AppBar";
 import { Form, Button, Fade } from 'react-bootstrap';
 import * as Icon from 'react-bootstrap-icons';
-import { deviceVersionText, downloadComplete, downloadData, downloadingData, serverVersionText } from "../utilities/Locale";
+import { language } from "../utilities/Locale";
 import ProgressBar from 'react-bootstrap/ProgressBar';
 import { hostURL } from "../utilities/Constant";
 
-const DownloadData = () => {
+const DownloadData = ({lang, setLang}) => {
     const urlParams = new URLSearchParams(window.location.search);
     const navigate = useNavigate();
     var backBtn = <Icon.ArrowLeft onClick={() => navigate('/', { replace: true })} style={{width:'50px', height:'50px', padding:'10px'}} />;
-    const[lang, setLang] = useState('tc');
     const[deviceVersion, setDeviceVersion] = useState('不適用');
     const[serverVersion, setServerVersion] = useState('');
     const[triggerDownload, setTriggerDownload] = useState(false);
     const[downloadedItem, setDownloadedItem] = useState(0);
     const[progress, setProgress] = useState(0);
-    const[mainText, setMainText] = useState(downloadingData[lang]);
+    const[mainText, setMainText] = useState(language.downloadingData[lang]);
 
     const[toastText, setToastText] = useState('');
     const[toastTrigger,setToastTrigger] = useState(0);
@@ -96,8 +95,8 @@ const DownloadData = () => {
         setProgress(100);
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        setMainText(downloadComplete[lang]);
-        setToastText(downloadComplete[lang]);
+        setMainText(language.downloadComplete[lang]);
+        setToastText(language.downloadComplete[lang]);
         setToastTrigger(prev => prev+1);
 
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -151,20 +150,20 @@ const DownloadData = () => {
             <div style={{height:'100dvh'}}>
 
                 {/* ===== APP BAR ===== */}
-                <AppBar leftIcon={backBtn} Header={downloadData[lang]} rightIcon={''}></AppBar>
+                <AppBar leftIcon={backBtn} Header={language.downloadData[lang]} rightIcon={''}></AppBar>
 
                 <Fade in={true} appear={true} style={{transitionDuration: '0.8s'}}>
                     <div style={{height:'100dvh'}}>
                         <div style={{ height: 'calc(100dvh - 50px)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', fontSize: '18px', textAlign: 'center' }}>
                             <div><Icon.Download style={{ width:'70px', height:'70px', padding: '0px'}} /></div>
-                            <div style={{marginTop:'20px'}}>{deviceVersionText[lang]}: {deviceVersion}</div>
-                            <div>{serverVersionText[lang]}: {serverVersion}</div>
+                            <div style={{marginTop:'20px'}}>{language.deviceVersionText[lang]}: {deviceVersion}</div>
+                            <div>{language.serverVersionText[lang]}: {serverVersion}</div>
 
                             {showDownloadProgress == false ? 
                             <div style={{marginTop:'40px', width:'50%'}}>
                                 <Button variant="success" style={{marginTop:'20px'}}
                                     onClick={() => {setTriggerDownload(true); setShowDownloadProgress(true)}}
-                                >{downloadData[lang]}</Button>
+                                >{language.downloadData[lang]}</Button>
                             </div> : ''}
 
                             {showDownloadProgress == true ?

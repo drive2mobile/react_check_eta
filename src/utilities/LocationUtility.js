@@ -1,4 +1,4 @@
-import { pleaseAllowBrowserToAccessLocation } from "./Locale";
+import { language } from "./Locale";
 
 const getLocation = async (setToastText, setToastTrigger, lang_in) => {
 	return new Promise(async (resolve, reject) => {
@@ -18,7 +18,7 @@ const getLocation = async (setToastText, setToastTrigger, lang_in) => {
 				}
 				else 
 				{
-					setToastText(pleaseAllowBrowserToAccessLocation[lang_in]);
+					setToastText(language.pleaseAllowBrowserToAccessLocation[lang_in]);
 					setToastTrigger((prev) => prev+1);
 					resolve([]);
 				}
@@ -26,7 +26,7 @@ const getLocation = async (setToastText, setToastTrigger, lang_in) => {
 		}
 		else 
 		{
-			setToastText(pleaseAllowBrowserToAccessLocation[lang_in]);
+			setToastText(language.pleaseAllowBrowserToAccessLocation[lang_in]);
 			setToastTrigger((prev) => prev+1);
 			resolve([]);
 		}
@@ -42,7 +42,7 @@ function getLocationStream(locationRef, setToastText, setToastTrigger, lang){
 		locationRef.current = [latitude, longitude];
 	},(error) => {
 		locationRef.current = [];
-		setToastText(pleaseAllowBrowserToAccessLocation[lang]);
+		setToastText(language.pleaseAllowBrowserToAccessLocation[lang]);
 		setToastTrigger((prev) => prev+1);
 	},options);
 	

@@ -4,16 +4,17 @@ import * as ReactIcon from 'react-bootstrap-icons';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { hostURL } from '../utilities/Constant';
+import { setStorageItemDB } from '../utilities/LocalStorage';
+import { downloadData, language } from '../utilities/Locale';
 
-const HomePage = () => {
+const HomePage = ({lang, setLang}) => {
     const navigate = useNavigate();
-    const lang = 'tc';
 
     async function changeLang(lang_in)
     {
-        // const newLang = {'lang':lang_in};
-        // await setStorageItemDB('lang', newLang);
-        // setLang(lang_in);
+        const newLang = {'lang':lang_in};
+        await setStorageItemDB('lang', newLang);
+        setLang(lang_in);
     }
 
     return (
@@ -39,29 +40,29 @@ const HomePage = () => {
                     <div className={styles.contentContainer}>
                         <div className={styles.logoTitleContainer}>
                             <img src={`${hostURL}/picture/logo_large.png`} style={{ width: '50%', height: 'auto', padding: '0px', border: '0px solid black', borderRadius: '15px' }} />
-                            <div className={styles.mainTitle}>香港巴士到站查詢</div>
-                            <div className={styles.mainSubtitle}>開始使用時，<b>請允許</b>瀏覽器使用你的位置</div>
+                            <div className={styles.mainTitle}>{language.checkETA[lang]}</div>
+                            <div className={styles.mainSubtitle}>{language.subtitle[lang]}</div>
                         </div>
 
                         <div className={styles.shortcutContainer}>
                             <Button variant="light" size='lg' style={{width:'26%', height:'120px'}} onClick={() => navigate('/quicksearch')}>
                                 <div >
                                     <ReactIcon.Magic style={{width:'55px', height:'55px', marginBottom:'10px', marginRight:'7.5%'}}/>
-                                    <div>快速搜尋</div>
+                                    <div>{language.quickSearch[lang]}</div>
                                 </div>
                             </Button>
 
                             <Button variant="light" size='lg' style={{width:'26%', height:'120px', marginLeft:'7.5%'}} onClick={() => navigate('/generalsearch')}>
                                 <div >
                                     <ReactIcon.Search style={{width:'55px', height:'55px', marginBottom:'10px'}}/>
-                                    <div>一般搜尋</div>
+                                    <div>{language.generalSearch[lang]}</div>
                                 </div>
                             </Button>
 
                             <Button variant="light" size='lg' style={{width:'26%', height:'120px', marginLeft:'7.5%'}} onClick={() => navigate('/downloaddata')}>
                                 <div >
                                     <ReactIcon.Download style={{width:'55px', height:'55px', marginBottom:'10px'}}/>
-                                    <div>下載資料</div>
+                                    <div>{language.downloadData[lang]}</div>
                                 </div>
                             </Button>
                         </div>

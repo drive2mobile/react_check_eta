@@ -1,5 +1,5 @@
 import { Fade } from "react-bootstrap";
-import { minute } from "../utilities/Locale";
+import { language } from "../utilities/Locale";
 
 
 const StopList = ({className, stopMarkers, setSelectedIndex, setTriggerShowMarkerLabel, setTriggerDownload, selectedIndex, lang }) => {
@@ -10,8 +10,8 @@ const StopList = ({className, stopMarkers, setSelectedIndex, setTriggerShowMarke
                     <div id={`element-${index}`} key={index}
                         onClick={() => { setSelectedIndex(index); setTriggerShowMarkerLabel(true); setTriggerDownload(true); }}
                         style={index === selectedIndex ?
-                            { height: '74px', width: '100%', display: 'block', textAlign: 'center', lineHeight: '60px', padding: '5px' } :
-                            { height: '54px', width: '100%', display: 'block', textAlign: 'center', lineHeight: '40px', padding: '5px' }
+                            { height: '74px', width: '100%', display: 'block', textAlign: 'center', lineHeight: '60px', padding: '5px', cursor:'pointer' } :
+                            { height: '54px', width: '100%', display: 'block', textAlign: 'center', lineHeight: '40px', padding: '5px', cursor:'pointer' }
                         }
                     >
 
@@ -27,7 +27,7 @@ const StopList = ({className, stopMarkers, setSelectedIndex, setTriggerShowMarke
 
                             {/* STOP NAME */}
                             <div style={{ width: '70%', textAlign: 'left', margin: '4px' }}>
-                                {item['name_tc']}
+                                {item[`name_${lang}`]}
                             </div>
 
                             {/* ETA */}
@@ -35,15 +35,15 @@ const StopList = ({className, stopMarkers, setSelectedIndex, setTriggerShowMarke
                                 <div style={{ width: '20%', lineHeight: '20px' }}>
                                     <div style={{ display: 'flex', flexDirection: 'row', height: '33%' }}>
                                         <div style={{ width: '50%', textAlign: 'right' }}>{item['eta1']}&nbsp;</div>
-                                        <div style={{ width: '50%', textAlign: 'left', fontSize: '11px', marginTop: 'auto' }}>{minute[lang]}</div>
+                                        <div style={{ width: '50%', textAlign: 'left', fontSize: '11px', marginTop: 'auto' }}>{language.minute[lang]}</div>
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'row', height: '33%' }}>
                                         <div style={{ width: '50%', textAlign: 'right' }}>{item['eta2']}&nbsp;</div>
-                                        <div style={{ width: '50%', textAlign: 'left', fontSize: '11px', marginTop: 'auto' }}>{minute[lang]}</div>
+                                        <div style={{ width: '50%', textAlign: 'left', fontSize: '11px', marginTop: 'auto' }}>{language.minute[lang]}</div>
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'row', height: '33%' }}>
                                         <div style={{ width: '50%', textAlign: 'right' }}>{item['eta3']}&nbsp;</div>
-                                        <div style={{ width: '50%', textAlign: 'left', fontSize: '11px', marginTop: 'auto' }}>{minute[lang]}</div>
+                                        <div style={{ width: '50%', textAlign: 'left', fontSize: '11px', marginTop: 'auto' }}>{language.minute[lang]}</div>
                                     </div>
                                 </div> : ''
                             }

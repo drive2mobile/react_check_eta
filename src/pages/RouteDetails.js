@@ -3,7 +3,7 @@ import OSM from "../ui_components/OSM";
 import styles from './styles/RouteDetailsStyle.module.css';
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ctb, dayCode, from, kmb, kmbctb, minute, quickSearch, routeTab, scheduleTab, start, to } from "../utilities/Locale";
+import { language } from "../utilities/Locale";
 import AppBar from "../ui_components/AppBar";
 import ToastAlert from "../ui_components/ToastAlert";
 import SpinnerFullscreen from "../ui_components/SpinnerFullscreen";
@@ -15,17 +15,16 @@ import { findClosestStopIndex } from "../utilities/LocationUtility";
 import Timetable from "../ui_components/Timetable";
 import StopList from "../ui_components/StopList";
 
-const RouteDetails = ({ locationMain, setStartGettingLocation }) => {
+const RouteDetails = ({ lang, setLang, locationMain, setStartGettingLocation }) => {
 
     const urlParams = new URLSearchParams(window.location.search);
     const navigate = useNavigate();
-    const [lang, setLang] = useState('tc');
     const [timer, setTimer] = useState(null);
 
     const [route, setRoute] = useState(null);
     const [dest, setDest] = useState(null);
     var backBtn = <Icon.ArrowLeft onClick={() => navigate(-1, { replace: true })} style={{ width: '50px', height: '50px', padding: '10px' }} />;
-    var appBarHeader = <span>{route} <span style={{ fontSize: '14px' }}> &ensp;&ensp;往 </span> {dest}</span>;
+    var appBarHeader = <span>{route} <span style={{ fontSize: '14px' }}> &ensp;&ensp;{language.to[lang]} </span> {dest}</span>;
 
     const [showLoading, setShowLoading] = useState(false);
     const [showContent, setShowContent] = useState(false);
@@ -247,7 +246,7 @@ const RouteDetails = ({ locationMain, setStartGettingLocation }) => {
                 <AppBar leftIcon={backBtn} Header={appBarHeader} rightIcon={''}></AppBar>
 
                 <div className={styles.contentContainer}>
-                    <div className={styles.mapContainer} style={{ '--cusHeight': (mapFullscreen == false || selectedTab == 'timetable') ? '45%' : '100%' }}>
+                    <div className={styles.mapContainer} style={{ '--cusHeight': selectedTab == 'timetable' ? '0%' : mapFullscreen ? '100%' : '45%' }}>
                         {showLoading == false ?
                             <OSM
                                 lang={lang}
@@ -265,23 +264,23 @@ const RouteDetails = ({ locationMain, setStartGettingLocation }) => {
                         }
                     </div>
 
-                    <div className={styles.rightSection} style={{ '--cusHeight': mapFullscreen ? '0%' : selectedTab == 'timetable' ? '100%' : '55%' }}>
+                    <div className={styles.rightSection} style={{ '--cusHeight': selectedTab == 'timetable' ? '100%' : mapFullscreen ? '0%' : '55%' }}>
                         {selectedTab == 'map' &&
-                            <StopList className={styles.stopListOrTimetableContainer} stopMarkers={stopMarkers} setSelectedIndex={setSelectedIndex} lang={'tc'}
+                            <StopList className={styles.stopListOrTimetableContainer} stopMarkers={stopMarkers} setSelectedIndex={setSelectedIndex} lang={lang}
                                 setTriggerShowMarkerLabel={setTriggerShowMarkerLabel} setTriggerDownload={setTriggerDownload} selectedIndex={selectedIndex}/>
                         }
 
                         {selectedTab == 'timetable' &&
-                            <Timetable className={styles.stopListOrTimetableContainer} lang={'tc'} stopMarkers={stopMarkers} timetable={timetable}/>
+                            <Timetable className={styles.stopListOrTimetableContainer} lang={lang} stopMarkers={stopMarkers} timetable={timetable}/>
                         }
 
                         <div className={styles.tabContainer}>
                             <div className={selectedTab == 'map' ? styles.tabItemActive : styles.tabItemNonActive}
-                                onClick={() => { setSelectedTab('map'); }}>{routeTab[lang]}
+                                onClick={() => { setSelectedTab('map'); }}>{language.routeTab[lang]}
                             </div>
 
                             <div className={selectedTab == 'timetable' ? styles.tabItemActive : styles.tabItemNonActive}
-                                onClick={() => { setSelectedTab('timetable'); }}>{scheduleTab[lang]}
+                                onClick={() => { setSelectedTab('timetable'); }}>{language.scheduleTab[lang]}
                             </div>
                         </div>
                     </div>

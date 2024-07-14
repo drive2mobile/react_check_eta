@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './styles/GeneralSearchStyle.module.css';
 import { Form, Button, Fade } from 'react-bootstrap';
-import { ctb, enterMultipleRoutes, generalSearch, kmb, kmbctb, mtr, mtrbus, to } from '../utilities/Locale';
+import { language } from '../utilities/Locale';
 import AppBar from '../ui_components/AppBar';
 import SpinnerFullscreen from '../ui_components/SpinnerFullscreen';
 import ToastAlert from '../ui_components/ToastAlert';
@@ -176,7 +176,7 @@ const GeneralSearch = ({locationMain, setStartGettingLocation}) => {
             <div style={{height:'100vh'}}>
 
                 {/* ===== APP BAR ===== */}
-                <AppBar leftIcon={backBtn} Header={generalSearch[lang]} rightIcon={''}></AppBar>
+                <AppBar leftIcon={backBtn} Header={language.generalSearch[lang]} rightIcon={''}></AppBar>
 
                 
                 <Fade in={showContent} appear={true} style={{transitionDuration: '0.3s'}}>
@@ -184,7 +184,7 @@ const GeneralSearch = ({locationMain, setStartGettingLocation}) => {
                     
                         {/* ===== ROUTE INPUT ===== */}
                         <div style={{height:'60px', display:'flex', direction:'column', alignContent:'center', padding:'5px'}}>
-                            <Form.Control type="text" value={inputRoutes} placeholder={enterMultipleRoutes[lang]} readOnly={true}/>
+                            <Form.Control type="text" value={inputRoutes} placeholder={language.enterMultipleRoutes[lang]} readOnly={true}/>
                             <Button variant="light" onClick={() => onChangeInputRoutes('clear')}
                                 style={{position:'fixed', right:'15px', top: '58px', textAlign:'center', height:'44px', width:'44px', borderRadius:'22px', padding:'0px'}} >
                                 <Icon.X style={{height:'25px', width:'25px'}}/>
@@ -211,18 +211,18 @@ const GeneralSearch = ({locationMain, setStartGettingLocation}) => {
 
                                             <div style={{width:'60%', lineHeight:'50px', textAlign:'left', margin:'4px'}}>
                                                 <div style={{display:'flex', flexDirection:'row', height:'100%'}}>
-                                                    <div style={{fontSize:'11px', marginTop: '3px'}}>{to[lang]}&nbsp;</div>
+                                                    <div style={{fontSize:'11px', marginTop: '3px'}}>{language.to[lang]}&nbsp;</div>
                                                     <div style={{fontSize:'17px', overflow:'hidden', wordBreak:'break-all'}}>{item['dest_tc']}</div>
                                                 </div>
                                             </div>
 
                                             <div style={{width:'20%', lineHeight:'50px', textAlign:'center', margin:'4px',  display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                                                 <div style={{lineHeight:'15px', fontSize:'11px', width:'100%'}}>
-                                                    {item['company'] == 'ctb' ? <div style={{backgroundImage: 'linear-gradient(to right, #fff25c, #fffac2)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{ctb[lang]}</div> : ''}
-                                                    {item['company'] == 'kmb' ? <div style={{backgroundImage: 'linear-gradient(to right, #fdaaaa, #fde0e0)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{kmb[lang]}</div> : ''}
-                                                    {item['company'] == 'kmbctb' ? <div style={{backgroundImage: 'linear-gradient(to right, #f4c1c1 50%, #fff68f 50%)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{kmbctb[lang]}</div> : ''}
-                                                    {item['company'] == 'mtrbus' ? <div style={{backgroundImage: 'linear-gradient(to right, #ab060b 50%, #6c4c9f 50%)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px', color:'white'}} >{mtrbus[lang]}</div> : ''}
-                                                    {item['company'] == 'mtr' ? <div style={{background: '#ab060b', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px', color:'white'}} >{mtr[lang]}</div> : ''}
+                                                    {item['company'] == 'ctb' ? <div style={{backgroundImage: 'linear-gradient(to right, #fff25c, #fffac2)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{language.ctb[lang]}</div> : ''}
+                                                    {item['company'] == 'kmb' ? <div style={{backgroundImage: 'linear-gradient(to right, #fdaaaa, #fde0e0)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{language.kmb[lang]}</div> : ''}
+                                                    {item['company'] == 'kmbctb' ? <div style={{backgroundImage: 'linear-gradient(to right, #f4c1c1 50%, #fff68f 50%)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px'}} >{language.kmbctb[lang]}</div> : ''}
+                                                    {item['company'] == 'mtrbus' ? <div style={{backgroundImage: 'linear-gradient(to right, #ab060b 50%, #6c4c9f 50%)', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px', color:'white'}} >{language.mtrbus[lang]}</div> : ''}
+                                                    {item['company'] == 'mtr' ? <div style={{background: '#ab060b', marginLeft:'6px', marginRight:'6px', borderRadius:'10px', padding:'1px', color:'white'}} >{language.mtr[lang]}</div> : ''}
                                                 </div>
                                             </div>
                                         </div>

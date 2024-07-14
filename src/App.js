@@ -7,6 +7,7 @@ import { pleaseAllowBrowserToAccessLocation } from "./utilities/Locale";
 import HomePage from "./pages/HomePage";
 import DownloadData from "./pages/DownloadData";
 import GeneralSearch from "./pages/GeneralSearch";
+import { getStorageItemDB, setStorageItemDB } from "./utilities/LocalStorage";
 
 function App() {
     const [startGettingLocation, setStartGettingLocation] = useState(false);
@@ -41,14 +42,34 @@ function App() {
         }
     }, [startGettingLocation]);
 
+    const[lang, setLang] = useState('');
+
+    useEffect(() => {
+        initialize();
+    },[])
+
+    async function initialize()
+    {
+        const newLang =  await getStorageItemDB('lang');
+
+        if (newLang['lang'] && newLang['lang'] != '')
+            setLang(newLang['lang']);
+        else
+        {
+            const newLang2 = {'lang':'tc'};
+            await setStorageItemDB('lang', newLang2);
+            setLang('tc');
+        }
+    }
+
     return (
         <BrowserRouter basename="/">
             <Routes>
-                <Route exact path="/" element={<HomePage />}></Route>
-                <Route exact path='/quickSearch' element={<QuickSearch locationMain={location} setStartGettingLocation={setStartGettingLocation}/>}> </Route>
+                <Route exact path="/" element={<HomePage lang={lang} setLang={setLang} />}></Route>
+                <Route exact path='/quickSearch' element={<QuickSearch lang={lang} setLang={setLang} locationMain={location} setStartGettingLocation={setStartGettingLocation}/>}> </Route>
                 <Route exact path='/generalsearch' element={<GeneralSearch locationMain={location} setStartGettingLocation={setStartGettingLocation}/>}></Route>
-                <Route exact path='/routedetails' element={<RouteDetails locationMain={location} setStartGettingLocation={setStartGettingLocation}/>}></Route>
-                <Route exact path='/downloadData' element={<DownloadData/>}></Route>
+                <Route exact path='/routedetails' element={<RouteDetails lang={lang} setLang={setLang} locationMain={location} setStartGettingLocation={setStartGettingLocation}/>}></Route>
+                <Route exact path='/downloadData' element={<DownloadData lang={lang} setLang={setLang} />}></Route>
             </Routes>
         </BrowserRouter>
     );

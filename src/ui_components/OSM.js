@@ -8,7 +8,7 @@ import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 import { getLocation } from '../utilities/LocationUtility';
 import { Button } from 'react-bootstrap';
-import { Icon0Circle } from 'react-bootstrap-icons';
+import styles from './OMS.module.css';
 
 let DefaultIcon = L.icon({
     iconUrl: icon,
@@ -23,6 +23,7 @@ let CustomIcon = new Icon({
     iconSize: [36, 36],
     iconAnchor: [18, 18]
 });
+
 
 const OSM = ({lang, fullscreen, selectedIndex, setFullscreen, mapLocation, stopMarkers, locationMain, 
     setSelectedIndex, setTriggerScrollToIndex, setTriggerShowMarkerLabel, setTriggerDownload}) => {
@@ -129,7 +130,9 @@ const OSM = ({lang, fullscreen, selectedIndex, setFullscreen, mapLocation, stopM
                     </Button>
                 </div> : ''}
 
-                <div style={{position:'absolute', zIndex:'1000', right:'10px', bottom:'20px'}}>
+                <div className={styles.btnEnlargeMap}
+                // style={{position:'absolute', zIndex:'1000', right:'10px', bottom:'20px'}}
+                >
                     <Button variant='light' onClick={() => {setFullscreen(!fullscreen)}}>
                         {fullscreen ? <IconReact.ArrowsAngleContract/> : <IconReact.ArrowsAngleExpand/>}
                     </Button>

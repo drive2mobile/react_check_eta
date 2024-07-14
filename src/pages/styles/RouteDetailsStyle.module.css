@@ -14,13 +14,13 @@
 }
 
 .mapContainer{
-    width: 50%;
+    width: 60%;
     margin: auto;
     height: calc(100dvh - 50px);
 }
 
 .rightSection{
-    width: 50%;
+    width: 40%;
     margin: auto;
     height: calc(100dvh - 50px);
 }
@@ -49,11 +49,13 @@
     color: #484848;
     font-weight: bold;
     text-decoration: underline;
+    cursor: pointer;
 }
 
 .tabItemNonActive{
     height: 39px;
     width: 50%;
+    cursor: pointer;
 }
 
 @media screen and (max-width: 1080px) { 
