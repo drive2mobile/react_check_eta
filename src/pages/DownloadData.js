@@ -39,6 +39,7 @@ const DownloadData = () => {
             download();
             setTriggerDownload(false);
         }
+        console.log('test')
     }, [triggerDownload])
 
     async function initialize()
