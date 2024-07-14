@@ -100,7 +100,7 @@ function toRadians(degrees) {
 }
 
 function findClosestStop(lat, lon, routeStopList) {
-	var closestStop = null;
+	var closestStop = routeStopList[0];
 	var closestDistance = 1000;
 
 	for (var i = 0; i < routeStopList.length; i++) {
