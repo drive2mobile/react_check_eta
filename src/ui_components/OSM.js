@@ -102,7 +102,7 @@ const OSM = ({lang, fullscreen, selectedIndex, setFullscreen, mapLocation, stopM
     };
     
     return (
-        <div ref={containerRef} style={ fullscreen ? {height:'100%', width:'100%'} : {height:'45%', width:'100%'}}>
+        <div ref={containerRef} style={{height:'100%', width:'100%'}}>
             <MapContainer ref={mapRef} center={mapLocation} zoom={16} style={{height:'100%', width:'100%'}}>
             
                 <TileLayer
@@ -128,6 +128,7 @@ const OSM = ({lang, fullscreen, selectedIndex, setFullscreen, mapLocation, stopM
                         <IconReact.Crosshair/>
                     </Button>
                 </div> : ''}
+
                 <div style={{position:'absolute', zIndex:'1000', right:'10px', bottom:'20px'}}>
                     <Button variant='light' onClick={() => {setFullscreen(!fullscreen)}}>
                         {fullscreen ? <IconReact.ArrowsAngleContract/> : <IconReact.ArrowsAngleExpand/>}

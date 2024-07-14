@@ -440,7 +440,7 @@ const QuickSearch = ({locationMain, setStartGettingLocation}) => {
                                 </Button>
                             </div>
 
-                            {/* ===== MAIN COUTE CONTENT ===== */}
+                            {/* ===== MAIN ROUTE CONTENT ===== */}
                             <div className={styles.etaList} 
                                 style={{'--cusHeight': showKeyboard?'calc(100dvh - 50px - 60px - 248px - 50px)':'calc(100dvh - 50px - 60px)'}}
                             >

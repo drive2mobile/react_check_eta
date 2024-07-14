@@ -12,37 +12,39 @@ import { downloadJson, extractCtbEta, extractKmbEta, extractMtrEta, extractMtrbu
 import axios from "axios";
 import { getStorageItemDB, setStorageItemDB } from "../utilities/LocalStorage";
 import { findClosestStopIndex } from "../utilities/LocationUtility";
+import Timetable from "../ui_components/Timetable";
+import StopList from "../ui_components/StopList";
 
-const RouteDetails = ({locationMain, setStartGettingLocation}) => {
+const RouteDetails = ({ locationMain, setStartGettingLocation }) => {
 
     const urlParams = new URLSearchParams(window.location.search);
     const navigate = useNavigate();
-    const[lang, setLang] = useState('tc');
-    const[timer, setTimer] = useState(null);
+    const [lang, setLang] = useState('tc');
+    const [timer, setTimer] = useState(null);
 
-    const[route, setRoute] = useState(null);
-    const[dest, setDest] = useState(null);
-    var backBtn = <Icon.ArrowLeft onClick={() => navigate(-1, { replace: true })} style={{width:'50px', height:'50px', padding:'10px'}} />;
-    var appBarHeader = <span>{route} <span style={{fontSize:'14px'}}> &ensp;&ensp;往 </span> {dest}</span>;
-    
-    const[showLoading, setShowLoading] = useState(false);
-    const[showContent, setShowContent] = useState(false);
-    const[selectedTab, setSelectedTab] = useState('map');
+    const [route, setRoute] = useState(null);
+    const [dest, setDest] = useState(null);
+    var backBtn = <Icon.ArrowLeft onClick={() => navigate(-1, { replace: true })} style={{ width: '50px', height: '50px', padding: '10px' }} />;
+    var appBarHeader = <span>{route} <span style={{ fontSize: '14px' }}> &ensp;&ensp;往 </span> {dest}</span>;
 
-    const[toastText, setToastText] = useState('');
-    const[toastTrigger,setToastTrigger] = useState(0);
+    const [showLoading, setShowLoading] = useState(false);
+    const [showContent, setShowContent] = useState(false);
+    const [selectedTab, setSelectedTab] = useState('map');
 
-    const[stopMarkers, setStopMarkers] = useState(null);
-    const[mapLocation, setMapLocation] = useState([22.324681505, 114.176558367]);
-    const[mapFullscreen, setMapFullscreen] = useState(false);
-    const[selectedIndex, setSelectedIndex] = useState(1000);
-    const[timetable, setTimetable] = useState({});
+    const [toastText, setToastText] = useState('');
+    const [toastTrigger, setToastTrigger] = useState(0);
 
-    const[triggerShowMarkerLabel, setTriggerShowMarkerLabel] = useState(false);
-    const[triggerScrollToIndex, setTriggerScrollToIndex] = useState(false);
-    const[triggerDownload, setTriggerDownload] = useState(false);
-    const[triggerAutoDownload, setTriggerAutoDownload] = useState(false);
-    const[triggerFindClosestStop, setTriggerClosestStop] = useState(false);
+    const [stopMarkers, setStopMarkers] = useState(null);
+    const [mapLocation, setMapLocation] = useState([22.324681505, 114.176558367]);
+    const [mapFullscreen, setMapFullscreen] = useState(false);
+    const [selectedIndex, setSelectedIndex] = useState(1000);
+    const [timetable, setTimetable] = useState({});
+
+    const [triggerShowMarkerLabel, setTriggerShowMarkerLabel] = useState(false);
+    const [triggerScrollToIndex, setTriggerScrollToIndex] = useState(false);
+    const [triggerDownload, setTriggerDownload] = useState(false);
+    const [triggerAutoDownload, setTriggerAutoDownload] = useState(false);
+    const [triggerFindClosestStop, setTriggerClosestStop] = useState(false);
 
     useEffect(() => {
         initialize();
@@ -63,10 +65,8 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
     }, [triggerScrollToIndex])
 
     useEffect(() => {
-        if (triggerFindClosestStop)
-        {
-            if (locationMain.length > 0)
-            {
+        if (triggerFindClosestStop) {
+            if (locationMain.length > 0) {
                 var newSeq = findClosestStopIndex(locationMain[0], locationMain[1], stopMarkers);
                 setSelectedIndex(newSeq);
                 setTriggerScrollToIndex(true);
@@ -79,26 +79,22 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
 
     useEffect(() => {
         let timerConstant = null;
-        if (triggerAutoDownload) 
-        {
+        if (triggerAutoDownload) {
             timerConstant = setInterval(() => {
                 setTriggerDownload(true);
-            }, 1000*30);
-            
+            }, 1000 * 30);
+
             setTimer(timerConstant);
-        } 
-        else if (triggerAutoDownload === false) 
-        {
-            if (timer) 
-            {
+        }
+        else if (triggerAutoDownload === false) {
+            if (timer) {
                 clearInterval(timer);
                 setTimer(null);
             }
         }
 
         return () => {
-            if (timer) 
-            {
+            if (timer) {
                 clearInterval(timer);
                 setTimer(null);
             }
@@ -106,29 +102,26 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
 
     }, [triggerAutoDownload])
 
-    async function initialize(){
+    async function initialize() {
         setStartGettingLocation(true);
         setShowLoading(true);
-       
+
         const routeid = urlParams.get('routeid');
 
         var routeStopListData = await getStorageItemDB('routeStopList', 'object');
         var timetableData = await getStorageItemDB('timetable', 'object');
-        if (Object.keys(routeStopListData).length == 0)
-        {
+        if (Object.keys(routeStopListData).length == 0) {
             navigate(`/downloaddata?autodownload=yes&prevpage=routedetails&routeid=${routeid}`, { replace: true });
-        }   
+        }
 
-        if (routeid in routeStopListData)
-        {   
+        if (routeid in routeStopListData) {
             var routeStopList = routeStopListData[routeid];
             setRoute(routeStopList[0]['route']);
             setDest(routeStopList[0]['dest_' + lang]);
             setStopMarkers(routeStopList);
         }
 
-        if (routeid in timetableData)
-        {
+        if (routeid in timetableData) {
             setTimetable(timetableData[routeid]);
         }
 
@@ -138,52 +131,46 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
         setTriggerClosestStop(true);
     }
 
-    function showMarkerLabel(){
-        if (triggerShowMarkerLabel)
-        {
+    function showMarkerLabel() {
+        if (triggerShowMarkerLabel) {
             const updatedMarkers = stopMarkers.map((currStopMarker, i) => {
                 if (i === selectedIndex) {
                     setMapLocation([currStopMarker.lat, currStopMarker.long]);
                     return { ...currStopMarker, show: true };
                 }
-                else { return { ...currStopMarker, show: false }; } 
+                else { return { ...currStopMarker, show: false }; }
             });
-    
+
             setStopMarkers(updatedMarkers);
             setTriggerShowMarkerLabel(false);
         }
     }
 
-    function scrollToIndex(){
-        if (triggerScrollToIndex)
-        {
+    function scrollToIndex() {
+        if (triggerScrollToIndex) {
             const element = document.getElementById(`element-${selectedIndex}`);
-            if (element) 
-            {
+            if (element) {
                 element.scrollIntoView({ behavior: 'smooth' });
             }
             setTriggerScrollToIndex(false);
         }
     };
 
-    async function downloadEta(){
+    async function downloadEta() {
         const updateElementByIndex = (index, newValue) => {
             setStopMarkers(prevArray => {
-              const updatedArray = [...prevArray];
-              updatedArray[index] = newValue;
-              return updatedArray;
+                const updatedArray = [...prevArray];
+                updatedArray[index] = newValue;
+                return updatedArray;
             });
         };
 
-        if (triggerDownload)
-        {
-            try
-            {
+        if (triggerDownload) {
+            try {
                 var currItem = stopMarkers[selectedIndex];
                 var company = stopMarkers[selectedIndex]['company'];
 
-                if (company == 'kmb')
-                {
+                if (company == 'kmb') {
                     const url = `https://data.etabus.gov.hk/v1/transport/kmb/eta/${currItem['stop']}/${currItem['route']}/1`;
                     const response = await axios.get(url);
                     const resultArray = extractKmbEta(response.data, stopMarkers[selectedIndex]['direction']);
@@ -191,8 +178,7 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
                     stopMarkers[selectedIndex]['eta2'] = resultArray[1];
                     stopMarkers[selectedIndex]['eta3'] = resultArray[2];
                 }
-                else if (company == 'ctb')
-                {
+                else if (company == 'ctb') {
                     const url = `https://rt.data.gov.hk/v2/transport/citybus/eta/ctb/${currItem['stop']}/${currItem['route']}`;
                     const response = await axios.get(url);
                     const resultArray = extractCtbEta(response.data, stopMarkers[selectedIndex]['direction']);
@@ -200,8 +186,7 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
                     stopMarkers[selectedIndex]['eta2'] = resultArray[1];
                     stopMarkers[selectedIndex]['eta3'] = resultArray[2];
                 }
-                else if (company == 'kmbctb')
-                {
+                else if (company == 'kmbctb') {
                     const urlKmb = `https://data.etabus.gov.hk/v1/transport/kmb/eta/${currItem['stop']}/${currItem['route']}/1`;
                     const responseKmb = await axios.get(urlKmb);
                     const resultArrayKmb = extractKmbEta(responseKmb.data, stopMarkers[selectedIndex]['direction']);
@@ -217,18 +202,16 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
                     stopMarkers[selectedIndex]['eta2'] = resultArray[1];
                     stopMarkers[selectedIndex]['eta3'] = resultArray[2];
                 }
-                else if (company == 'mtrbus')
-                {
+                else if (company == 'mtrbus') {
                     const url = `https://rt.data.gov.hk/v1/transport/mtr/bus/getSchedule`;
-                    const body = {"language": "zh", "routeName": currItem['route']};
+                    const body = { "language": "zh", "routeName": currItem['route'] };
                     const response = await axios.post(url, body);
                     const resultArray = extractMtrbusEta(response.data, stopMarkers[selectedIndex]['stop']);
                     stopMarkers[selectedIndex]['eta1'] = resultArray[0];
                     stopMarkers[selectedIndex]['eta2'] = resultArray[1];
                     stopMarkers[selectedIndex]['eta3'] = resultArray[2];
                 }
-                else if (company == 'mtr')
-                {
+                else if (company == 'mtr') {
                     const url = `https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=${currItem['route']}&sta=${currItem['stop']}`;
                     const response = await axios.get(url);
                     const resultArray = extractMtrEta(response.data, currItem['route'], currItem['stop'], currItem['direction']);
@@ -241,8 +224,7 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
                 updateElementByIndex(selectedIndex, stopMarkers[selectedIndex]);
                 // setTriggerAutoDownload(true);
             }
-            catch(error)
-            {
+            catch (error) {
                 // setToastText(unableToDownloadETA[lang]);
                 // setToastTrigger((prev) => prev+1);
             }
@@ -253,121 +235,59 @@ const RouteDetails = ({locationMain, setStartGettingLocation}) => {
     return (
         <div className={styles.body}>
             {/* ===== LOADING SPINNER ===== */}
-            <SpinnerFullscreen showLoading={showLoading}/>
+            <SpinnerFullscreen showLoading={showLoading} />
 
             {/* ===== TOAST ===== */}
-            <ToastAlert toastText={toastText} toastTrigger={toastTrigger}/>
+            <ToastAlert toastText={toastText} toastTrigger={toastTrigger} />
 
             {/* ===== MAIN CONTENT ===== */}
-            <div style={{height:'100dvh'}}>
+            <div style={{ height: '100dvh' }}>
 
                 {/* ===== APP BAR ===== */}
                 <AppBar leftIcon={backBtn} Header={appBarHeader} rightIcon={''}></AppBar>
 
-                {selectedTab == 'map' &&
-                    <div style={{height: 'calc(100dvh - 50px - 40px)'}}>
-                    {showLoading == false ?
-                        <OSM 
-                            lang={lang} 
-                            fullscreen={mapFullscreen} 
-                            selectedIndex={selectedIndex}
-                            setFullscreen={setMapFullscreen} 
-                            mapLocation={mapLocation} 
-                            stopMarkers={stopMarkers} 
-                            locationMain={locationMain}
-                            setSelectedIndex={setSelectedIndex}
-                            setTriggerScrollToIndex={setTriggerScrollToIndex} 
-                            setTriggerShowMarkerLabel={setTriggerShowMarkerLabel}
-                            setTriggerDownload={setTriggerDownload}
-                        /> : ''
-                    }
-
-                    <div style={mapFullscreen ? {height: '0%', overflow: 'auto', scrollbarWidth: 'none', padding:'0px'} : {height: '55%', overflow: 'auto', scrollbarWidth: 'none', paddingTop:'5px', paddingBottom:'5px'}} >
-                    {stopMarkers && stopMarkers.map((item, index) => (
-                        <Fade in={true} appear={true} >
-                            <div id={`element-${index}`} key={index} 
-                                onClick={()=> {setSelectedIndex(index); setTriggerShowMarkerLabel(true); setTriggerDownload(true); }}
-                                style={ index === selectedIndex ? 
-                                    {height:'74px', width:'100%', display:'block', textAlign:'center', lineHeight:'60px', padding:'5px'} :
-                                    {height:'54px', width:'100%', display:'block', textAlign:'center', lineHeight:'40px', padding:'5px'} 
-                                } 
-                            >
-
-                                <div style={index === selectedIndex ? 
-                                    {margin:'2px', marginTop:'0px', height:'66px', backgroundColor:'white', display:'flex', borderRadius:'4px', border: '1px solid #e2e2e2', overflow:'hidden', flexDirection:'row'}:
-                                    {margin:'2px', marginTop:'0px', height:'46px', backgroundColor:'white', display:'flex', borderRadius:'4px', border: '1px solid #e2e2e2', overflow:'hidden', flexDirection:'row'}} 
-                                >
-                                
-                                    <div style={{width:'10%', textAlign:'right', margin:'4px'}}>
-                                        {item['seq'] + '.'}
-                                    </div>
-                                    <div style={{width:'70%', textAlign:'left', margin:'4px'}}>
-                                        {item['name_tc']}
-                                    </div>
-                                    
-                                    {index === selectedIndex ?
-                                        <div style={{width:'20%', lineHeight:'20px'}}>
-                                            <div style={{display:'flex', flexDirection:'row', height:'33%'}}>
-                                                <div style={{width:'50%', textAlign:'right'}}>{item['eta1']}&nbsp;</div>
-                                                <div style={{width:'50%', textAlign:'left', fontSize:'11px', marginTop: 'auto'}}>{minute[lang]}</div>
-                                            </div>
-                                            <div style={{display:'flex', flexDirection:'row', height:'33%'}}>
-                                                <div style={{width:'50%', textAlign:'right'}}>{item['eta2']}&nbsp;</div>
-                                                <div style={{width:'50%', textAlign:'left', fontSize:'11px', marginTop: 'auto'}}>{minute[lang]}</div>
-                                            </div>
-                                            <div style={{display:'flex', flexDirection:'row', height:'33%'}}>
-                                                <div style={{width:'50%', textAlign:'right'}}>{item['eta3']}&nbsp;</div>
-                                                <div style={{width:'50%', textAlign:'left', fontSize:'11px', marginTop: 'auto'}}>{minute[lang]}</div>
-                                            </div>
-                                        </div>:''
-                                    }   
-                                    
-                                </div>
-                            </div>
-                        </Fade>
-                    ))}
+                <div className={styles.contentContainer}>
+                    <div className={styles.mapContainer} style={{ '--cusHeight': (mapFullscreen == false || selectedTab == 'timetable') ? '45%' : '100%' }}>
+                        {showLoading == false ?
+                            <OSM
+                                lang={lang}
+                                fullscreen={mapFullscreen}
+                                selectedIndex={selectedIndex}
+                                setFullscreen={setMapFullscreen}
+                                mapLocation={mapLocation}
+                                stopMarkers={stopMarkers}
+                                locationMain={locationMain}
+                                setSelectedIndex={setSelectedIndex}
+                                setTriggerScrollToIndex={setTriggerScrollToIndex}
+                                setTriggerShowMarkerLabel={setTriggerShowMarkerLabel}
+                                setTriggerDownload={setTriggerDownload}
+                            /> : ''
+                        }
                     </div>
 
-                    </div>
-                }      
+                    <div className={styles.rightSection} style={{ '--cusHeight': mapFullscreen ? '0%' : selectedTab == 'timetable' ? '100%' : '55%' }}>
+                        {selectedTab == 'map' &&
+                            <StopList className={styles.stopListOrTimetableContainer} stopMarkers={stopMarkers} setSelectedIndex={setSelectedIndex} lang={'tc'}
+                                setTriggerShowMarkerLabel={setTriggerShowMarkerLabel} setTriggerDownload={setTriggerDownload} selectedIndex={selectedIndex}/>
+                        }
 
-                {selectedTab == 'timetable' &&
-                    <Fade in={true} appear={true} >
-                        <div style={{height: 'calc(100dvh - 50px - 40px', overflow: 'auto', scrollbarWidth: 'none'}}>
-                            <div style={{marginLeft:'80px', marginRight:'80px', paddingTop:'20px', paddingBottom:'5px', 
-                            borderBottom:'2px solid #bdffb9', fontSize:'16px', color: '#484848'}}> 
-                                {from[lang] + stopMarkers[0]['name_tc'] + start[lang]}
+                        {selectedTab == 'timetable' &&
+                            <Timetable className={styles.stopListOrTimetableContainer} lang={'tc'} stopMarkers={stopMarkers} timetable={timetable}/>
+                        }
+
+                        <div className={styles.tabContainer}>
+                            <div className={selectedTab == 'map' ? styles.tabItemActive : styles.tabItemNonActive}
+                                onClick={() => { setSelectedTab('map'); }}>{routeTab[lang]}
                             </div>
-                            {Object.entries(timetable).map(([key, value]) => (
-                                <div key={key} style={{paddingLeft:'80px', paddingRight:'80px', paddingTop:'0px', paddingBottom:'20px'}}> 
-                                    <div>{dayCode[key][lang]}</div>
-                                    {value.map((item, index) => (
-                                        <div key={index} style={{ display: 'flex', flexDirection: 'row' }}> 
-                                            <div style={{ width: '70%' }}>{item['startTime']}</div>
-                                            <div style={{ width: '30%', textAlign:'right' }}>
-                                            {item['frequency'] == undefined ?  "" : item['frequency'] + ' ' + minute[lang]}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ))}
+
+                            <div className={selectedTab == 'timetable' ? styles.tabItemActive : styles.tabItemNonActive}
+                                onClick={() => { setSelectedTab('timetable'); }}>{scheduleTab[lang]}
+                            </div>
                         </div>
-                    </Fade>
-                    
-                }         
+                    </div>
 
-                <div style={{height:'39px', width:'100%', display:'flex', flexDirection:'row', backgroundColor:'white',
-                    lineHeight:'39px', textAlign:'center', borderTop:'1px solid #e2e2e2'}}>
-                    <div style={selectedTab == 'map' ?
-                        {height:'39px', width:'50%', color:'#484848', fontWeight:'bold', textDecoration:'underline' } :
-                        {height:'39px', width:'50%'}}
-                        onClick={() => {setSelectedTab('map');}}>{routeTab[lang]}</div>
-
-                    <div style={selectedTab == 'timetable' ?
-                        {height:'39px', width:'50%', color:'#484848', fontWeight:'bold', textDecoration:'underline' } :
-                        {height:'39px', width:'50%'}}
-                        onClick={() => {setSelectedTab('timetable');}}>{scheduleTab[lang]}</div>
                 </div>
+
             </div>
         </div>
     )
