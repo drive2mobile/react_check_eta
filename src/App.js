@@ -42,7 +42,7 @@ function App() {
         }
     }, [startGettingLocation]);
 
-    const[lang, setLang] = useState('');
+    const[lang, setLang] = useState('tc');
 
     useEffect(() => {
         initialize();
